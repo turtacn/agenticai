@@ -27,10 +27,15 @@ AgenticAI Platform 是一个全面的、Kubernetes原生的基础设施平台，
 AgenticAI Platform 通过以下能力解决这些痛点：
 
 ✅ **企业级安全** - 基于gVisor、Kata Containers和Firecracker的多层沙箱隔离
+
 ✅ **Kubernetes原生** - 充分利用云原生生态系统的可扩展性和可靠性
+
 ✅ **完整可观测性** - 基于OpenTelemetry的全栈追踪、指标和日志
+
 ✅ **统一工具协议** - MCP（模型上下文协议）支持标准化工具交互
+
 ✅ **成本优化** - 实时成本跟踪和资源优化建议
+
 ✅ **全面治理** - 基于SPIFFE的身份认证、审计跟踪和合规控制
 
 ## 主要功能特性

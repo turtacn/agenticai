@@ -1,4 +1,4 @@
-# AgenticAI Platform 架构设计文档
+# Agentic AI Platform 架构设计文档
 
 ## 概览
 

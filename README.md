@@ -9,7 +9,7 @@
 
 **An Enterprise-Grade, Cloud-Native Agentic AI Infrastructure Platform**
 
-AgenticAI Platform is a comprehensive, Kubernetes-native infrastructure designed to deploy, manage, and govern AI agents at enterprise scale. Built with security, observability, and cost optimization in mind, it provides a unified platform for running AI workloads with complete governance capabilities.
+Agentic AI Platform is a comprehensive, Kubernetes-native infrastructure designed to deploy, manage, and govern AI agents at enterprise scale. Built with security, observability, and cost optimization in mind, it provides a unified platform for running AI workloads with complete governance capabilities.
 
 [中文版本 README](README-zh.md) | [English Version](README.md)
 
@@ -27,10 +27,15 @@ Traditional AI deployment faces critical challenges in enterprise environments:
 AgenticAI Platform addresses these pain points by providing:
 
 ✅ **Enterprise-Grade Security** - Multi-layer sandboxing with gVisor, Kata Containers, and Firecracker
+
 ✅ **Kubernetes-Native** - Leverages cloud-native ecosystem for scalability and reliability
+
 ✅ **Complete Observability** - Full-stack tracing, metrics, and logging with OpenTelemetry
+
 ✅ **Unified Tool Protocol** - MCP (Model Context Protocol) support for standardized tool interactions
+
 ✅ **Cost Optimization** - Real-time cost tracking and resource optimization recommendations
+
 ✅ **Comprehensive Governance** - SPIFFE-based identity, audit trails, and compliance controls
 
 ## Key Features
