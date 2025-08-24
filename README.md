@@ -13,6 +13,9 @@ Agentic AI Platform is a comprehensive, Kubernetes-native infrastructure designe
 
 [中文版本 README](README-zh.md) | [English Version](README.md)
 
+<img src="demo.gif" alt="Demo" width="100%" />
+
+
 ## Why AgenticAI Platform?
 
 Traditional AI deployment faces critical challenges in enterprise environments:

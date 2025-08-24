@@ -13,6 +13,9 @@ AgenticAI Platform 是一个全面的、Kubernetes原生的基础设施平台，
 
 [English Version](README.md) | [中文版本 README](README-zh.md)
 
+<img src="demo.gif" alt="Demo" width="100%" />
+
+
 ## 为什么选择 AgenticAI Platform？
 
 传统AI部署在企业环境中面临的关键挑战：
