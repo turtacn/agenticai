@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgenticAI Platform - 企业级智能体AI基础设施</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#10b981',
+                        dark: '#1e293b',
+                        light: '#f8fafc',
+                        accent: '#f59e0b',
+                        danger: '#ef4444',
+                        info: '#3b82f6'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Montserrat', 'sans-serif']
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-gradient {
+                background-clip: text;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+            .bg-grid {
+                background-image: radial-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px);
+                background-size: 20px 20px;
+            }
+            .animate-float {
+                animation: float 6s ease-in-out infinite;
+            }
+            .animate-pulse-slow {
+                animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            .animate-glow {
+                animation: glow 2s ease-in-out infinite alternate;
+            }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(99, 102, 241, 0.5); }
+            to { box-shadow: 0 0 20px rgba(99, 102, 241, 0.8); }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-dark text-light antialiased">
+<!-- 导航栏 -->
+<nav id="navbar" class="fixed w-full z-50 transition-all duration-300 bg-dark/80 backdrop-blur-md">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-info flex items-center justify-center mr-3">
+                    <img src="logo.png" alt="AgenticAI Logo" class="w-8 h-8 rounded-md" />
+                </div>
+                <span class="text-xl font-display font-bold bg-gradient-to-r from-primary to-info text-gradient">AgenticAI</span>
+            </div>
+
+            <!-- 桌面导航 -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#overview" class="text-gray-300 hover:text-white transition-colors">概览</a>
+                <a href="#value" class="text-gray-300 hover:text-white transition-colors">业务价值</a>
+                <a href="#architecture" class="text-gray-300 hover:text-white transition-colors">技术架构</a>
+                <a href="#features" class="text-gray-300 hover:text-white transition-colors">核心特性</a>
+                <a href="#roadmap" class="text-gray-300 hover:text-white transition-colors">路线图</a>
+                <button class="bg-gradient-to-r from-primary to-info px-6 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity">
+                    开始使用
+                </button>
+            </div>
+
+            <!-- 移动端菜单按钮 -->
+            <button id="menuBtn" class="md:hidden text-gray-300 hover:text-white">
+                <i class="fa fa-bars text-2xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 移动端菜单 -->
+    <div id="mobileMenu" class="hidden md:hidden bg-dark/95 backdrop-blur-md border-t border-gray-800">
+        <div class="container mx-auto px-4 py-3 flex flex-col space-y-3">
+            <a href="#overview" class="text-gray-300 hover:text-white py-2 transition-colors">概览</a>
+            <a href="#value" class="text-gray-300 hover:text-white py-2 transition-colors">业务价值</a>
+            <a href="#architecture" class="text-gray-300 hover:text-white py-2 transition-colors">技术架构</a>
+            <a href="#features" class="text-gray-300 hover:text-white py-2 transition-colors">核心特性</a>
+            <a href="#roadmap" class="text-gray-300 hover:text-white py-2 transition-colors">路线图</a>
+            <button class="bg-gradient-to-r from-primary to-info px-6 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity w-full">
+                开始使用
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- 英雄区域 -->
+<header class="relative min-h-screen flex items-center bg-grid overflow-hidden">
+    <!-- 背景装饰 -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full filter blur-3xl animate-pulse-slow"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-info/20 rounded-full filter blur-3xl animate-pulse-slow" style="animation-delay: 2s;"></div>
+    </div>
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-20">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div class="space-y-8 max-w-3xl">
+                <div class="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
+                    企业级·云原生·AI基础设施
+                </div>
+                <h1 class="text-[clamp(2.5rem,6vw,4rem)] font-display font-bold leading-tight">
+                    重新定义<span class="bg-gradient-to-r from-primary to-info text-gradient">AI智能体</span>的部署与管理方式
+                </h1>
+                <p class="text-xl text-gray-300 leading-relaxed">
+                    AgenticAI Platform 提供企业级安全防护、资源优化与全链路可观测性，让AI智能体在企业环境中高效、安全地运行。
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button class="bg-gradient-to-r from-primary to-info px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:shadow-primary/20 transition-all transform hover:-translate-y-1">
+                        探索平台 <i class="fa fa-arrow-right ml-2"></i>
+                    </button>
+                    <button class="border border-gray-700 bg-transparent px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-800 transition-all">
+                        <i class="fa fa-play-circle mr-2"></i> 观看演示
+                    </button>
+                </div>
+                <div class="flex items-center space-x-6 pt-4">
+                    <div class="flex -space-x-2">
+                        <img src="https://picsum.photos/id/1/40/40" alt="用户头像" class="w-10 h-10 rounded-full border-2 border-dark">
+                        <img src="https://picsum.photos/id/2/40/40" alt="用户头像" class="w-10 h-10 rounded-full border-2 border-dark">
+                        <img src="https://picsum.photos/id/3/40/40" alt="用户头像" class="w-10 h-10 rounded-full border-2 border-dark">
+                        <div class="w-10 h-10 rounded-full border-2 border-dark bg-gray-800 flex items-center justify-center text-xs font-medium">
+                            200+
+                        </div>
+                    </div>
+                    <div class="text-gray-400 text-sm">
+                        全球已有200+企业选择
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative">
+                <div class="relative z-10 animate-float">
+                    <div class="bg-gray-800/50 backdrop-blur-lg rounded-2xl border border-gray-700 overflow-hidden shadow-2xl">
+                        <div class="p-4 bg-gray-900/50 border-b border-gray-700 flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 rounded-full bg-danger"></div>
+                                <div class="w-3 h-3 rounded-full bg-accent"></div>
+                                <div class="w-3 h-3 rounded-full bg-secondary"></div>
+                            </div>
+                            <div class="text-sm text-gray-400">agenticai-dashboard</div>
+                        </div>
+                        <img src="https://picsum.photos/id/2/800/500" alt="AgenticAI平台控制台" class="w-full">
+                    </div>
+
+                    <!-- 浮动卡片 -->
+                    <div class="absolute -top-6 -right-6 bg-gray-800/70 backdrop-blur-lg rounded-xl border border-gray-700 p-4 shadow-xl max-w-[200px] animate-glow">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <div class="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
+                            <span class="text-sm font-medium">GPU利用率</span>
+                        </div>
+                        <div class="text-2xl font-bold">82%</div>
+                        <div class="text-xs text-gray-400 mt-1">较上周提升15%</div>
+                    </div>
+
+                    <div class="absolute -bottom-4 -left-4 bg-gray-800/70 backdrop-blur-lg rounded-xl border border-gray-700 p-4 shadow-xl max-w-[180px]">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <i class="fa fa-shield text-primary"></i>
+                            <span class="text-sm font-medium">安全状态</span>
+                        </div>
+                        <div class="text-sm font-medium">100% 合规</div>
+                        <div class="text-xs text-gray-400 mt-1">零安全事件</div>
+                    </div>
+                </div>
+
+                <!-- 背景装饰 -->
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-r from-primary to-info blur-3xl opacity-20 rounded-full"></div>
+            </div>
+        </div>
+
+        <!-- 滚动指示器 -->
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center animate-bounce">
+            <span class="text-sm text-gray-400 mb-2">向下滚动探索更多</span>
+            <i class="fa fa-chevron-down text-gray-400"></i>
+        </div>
+    </div>
+</header>
+
+<!-- 概览部分 -->
+<section id="overview" class="py-24 relative overflow-hidden">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-display font-bold mb-6">
+                企业级AI智能体的<span class="bg-gradient-to-r from-primary to-info text-gradient">完整解决方案</span>
+            </h2>
+            <p class="text-xl text-gray-300">
+                AgenticAI Platform 解决传统AI部署在企业环境中的核心挑战，提供安全、高效、可观测的AI智能体运行环境。
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- 挑战卡片 -->
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 hover:border-primary/50 transition-all group">
+                <div class="w-12 h-12 rounded-lg bg-danger/10 flex items-center justify-center mb-4 group-hover:bg-danger/20 transition-colors">
+                    <i class="fa fa-unlock-alt text-danger text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">安全隔离不足</h3>
+                <p class="text-gray-400">
+                    高风险AI操作（代码执行、网页浏览）缺乏适当的沙箱环境，带来潜在安全隐患。
+                </p>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 hover:border-primary/50 transition-all group">
+                <div class="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+                    <i class="fa fa-server text-accent text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">资源管理低效</h3>
+                <p class="text-gray-400">
+                    GPU资源利用率不高，调度机制不完善，导致资源浪费和成本上升。
+                </p>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 hover:border-primary/50 transition-all group">
+                <div class="w-12 h-12 rounded-lg bg-info/10 flex items-center justify-center mb-4 group-hover:bg-info/20 transition-colors">
+                    <i class="fa fa-eye-slash text-info text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">可观测性缺失</h3>
+                <p class="text-gray-400">
+                    对AI智能体行为和性能缺乏充分的可见性，难以排查问题和优化性能。
+                </p>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 hover:border-primary/50 transition-all group">
+                <div class="w-12 h-12 rounded-lg bg-warning/10 flex items-center justify-center mb-4 group-hover:bg-warning/20 transition-colors">
+                    <i class="fa fa-gavel text-warning text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">治理能力不足</h3>
+                <p class="text-gray-400">
+                    缺乏有效的审计跟踪和合规控制，难以满足企业监管要求。
+                </p>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 hover:border-primary/50 transition-all group">
+                <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <i class="fa fa-puzzle-piece text-primary text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">集成复杂度高</h3>
+                <p class="text-gray-400">
+                    难以在不同AI模型间标准化工具交互，增加开发和维护成本。
+                </p>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 hover:border-primary/50 transition-all group">
+                <div class="w-12 h-12 rounded-lg bg-secondary/10 flex items-center justify-center mb-4 group-hover:bg-secondary/20 transition-colors">
+                    <i class="fa fa-money text-secondary text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">成本控制困难</h3>
+                <p class="text-gray-400">
+                    缺乏有效的成本跟踪和优化机制，AI部署成本难以预测和控制。
+                </p>
+            </div>
+        </div>
+
+        <!-- 解决方案概述 -->
+        <div class="mt-20 bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+            <div class="grid md:grid-cols-2">
+                <div class="p-8 md:p-12 flex flex-col justify-center">
+                    <h3 class="text-2xl font-display font-bold mb-6">我们的解决方案</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <div class="mt-1 mr-4 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                                <i class="fa fa-check text-primary text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg">多层安全防护体系</h4>
+                                <p class="text-gray-400">基于SPIFFE的身份认证和多种沙箱运行时提供强隔离</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <div class="mt-1 mr-4 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                                <i class="fa fa-check text-primary text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg">云原生资源管理</h4>
+                                <p class="text-gray-400">Kubernetes原生调度和GPU动态资源分配优化资源利用率</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <div class="mt-1 mr-4 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                                <i class="fa fa-check text-primary text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg">全链路可观测性</h4>
+                                <p class="text-gray-400">基于OpenTelemetry的追踪、指标和日志提供全面可见性</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <div class="mt-1 mr-4 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                                <i class="fa fa-check text-primary text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg">标准化工具生态</h4>
+                                <p class="text-gray-400">MCP协议支持标准化工具交互，简化集成复杂度</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="relative h-64 md:h-auto">
+                    <img src="https://picsum.photos/id/20/800/600" alt="AgenticAI解决方案" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 业务价值部分 -->
+<section id="value" class="py-24 bg-gray-900 relative">
+    <div class="absolute inset-0 bg-grid opacity-30"></div>
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-display font-bold mb-6">
+                显著的<span class="bg-gradient-to-r from-primary to-info text-gradient">业务价值</span>
+            </h2>
+            <p class="text-xl text-gray-300">
+                AgenticAI Platform 为企业带来可量化的效率提升、成本优化和风险降低
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+            <!-- 价值卡片 -->
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 hover:transform hover:-translate-y-2 transition-all">
+                <div class="text-4xl font-bold text-primary mb-2">40%+</div>
+                <div class="text-gray-300 mb-4">AI智能体任务执行效率提升</div>
+                <div class="h-1 w-16 bg-primary/30 rounded-full"></div>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 hover:transform hover:-translate-y-2 transition-all">
+                <div class="text-4xl font-bold text-info mb-2">60%</div>
+                <div class="text-gray-300 mb-4">开发到部署周期缩短</div>
+                <div class="h-1 w-16 bg-info/30 rounded-full"></div>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 hover:transform hover:-translate-y-2 transition-all">
+                <div class="text-4xl font-bold text-secondary mb-2">80%+</div>
+                <div class="text-gray-300 mb-4">GPU资源利用率提升</div>
+                <div class="h-1 w-16 bg-secondary/30 rounded-full"></div>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 hover:transform hover:-translate-y-2 transition-all">
+                <div class="text-4xl font-bold text-accent mb-2">30%</div>
+                <div class="text-gray-300 mb-4">总体拥有成本降低</div>
+                <div class="h-1 w-16 bg-accent/30 rounded-full"></div>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-12">
+            <!-- 图表区域 -->
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+                <h3 class="text-xl font-bold mb-6">性能提升对比</h3>
+                <div class="h-80">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+                <h3 class="text-xl font-bold mb-6">风险降低与合规提升</h3>
+                <div class="h-80">
+                    <canvas id="riskChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 客户评价 -->
+        <div class="mt-20">
+            <h3 class="text-2xl font-display font-bold text-center mb-12">客户见证价值</h3>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 relative">
+                    <div class="absolute -top-4 left-6 text-5xl text-primary opacity-20">"</div>
+                    <p class="text-gray-300 mb-6 relative z-10">
+                        AgenticAI平台帮助我们将GPU利用率从35%提升到了82%，仅这一项就为我们节省了近百万美元的基础设施成本。
+                    </p>
+                    <div class="flex items-center">
+                        <img src="https://picsum.photos/id/10/60/60" alt="客户头像" class="w-12 h-12 rounded-full mr-4">
+                        <div>
+                            <div class="font-medium">张明</div>
+                            <div class="text-sm text-gray-400">某大型金融科技公司 CTO</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 relative">
+                    <div class="absolute -top-4 left-6 text-5xl text-primary opacity-20">"</div>
+                    <p class="text-gray-300 mb-6 relative z-10">
+                        安全合规一直是我们的痛点，AgenticAI的多层沙箱和审计跟踪功能让我们轻松通过了数次严格的行业合规检查。
+                    </p>
+                    <div class="flex items-center">
+                        <img src="https://picsum.photos/id/11/60/60" alt="客户头像" class="w-12 h-12 rounded-full mr-4">
+                        <div>
+                            <div class="font-medium">李华</div>
+                            <div class="text-sm text-gray-400">某医疗AI公司 技术总监</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 relative">
+                    <div class="absolute -top-4 left-6 text-5xl text-primary opacity-20">"</div>
+                    <p class="text-gray-300 mb-6 relative z-10">
+                        借助AgenticAI的可观测性工具，我们能够快速定位AI智能体的性能瓶颈，将任务执行效率提升了45%。
+                    </p>
+                    <div class="flex items-center">
+                        <img src="https://picsum.photos/id/12/60/60" alt="客户头像" class="w-12 h-12 rounded-full mr-4">
+                        <div>
+                            <div class="font-medium">王强</div>
+                            <div class="text-sm text-gray-400">某电商平台 AI负责人</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 技术架构部分 -->
+<section id="architecture" class="py-24 relative">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-display font-bold mb-6">
+                云原生<span class="bg-gradient-to-r from-primary to-info text-gradient">技术架构</span>
+            </h2>
+            <p class="text-xl text-gray-300">
+                基于Kubernetes的分层架构设计，提供企业级可扩展性、可靠性和安全性
+            </p>
+        </div>
+
+        <!-- 架构图 -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 lg:p-10 mb-16 overflow-hidden">
+            <div class="relative">
+                <!-- 简化的架构图 -->
+                <div class="architecture-diagram relative w-full h-[600px]">
+                    <!-- 背景层 -->
+                    <div class="absolute inset-0 bg-grid opacity-10 rounded-lg"></div>
+
+                    <!-- 用户层 -->
+                    <div class="absolute top-8 left-1/2 -translate-x-1/2 w-[80%] bg-gray-700/30 backdrop-blur-sm rounded-lg p-4 border border-gray-600">
+                        <div class="text-center font-bold mb-2">用户层</div>
+                        <div class="flex justify-center space-x-6">
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-primary/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-terminal text-primary"></i>
+                                </div>
+                                <div class="text-sm">CLI工具</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-primary/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-desktop text-primary"></i>
+                                </div>
+                                <div class="text-sm">Web控制台</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-primary/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-code text-primary"></i>
+                                </div>
+                                <div class="text-sm">API客户端</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 接入层 -->
+                    <div class="absolute top-40 left-1/2 -translate-x-1/2 w-[85%] bg-gray-700/30 backdrop-blur-sm rounded-lg p-4 border border-gray-600">
+                        <div class="text-center font-bold mb-2">接入层</div>
+                        <div class="flex justify-center space-x-6">
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-info/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-random text-info"></i>
+                                </div>
+                                <div class="text-sm">API网关</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-info/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-balance-scale text-info"></i>
+                                </div>
+                                <div class="text-sm">负载均衡</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-info/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-key text-info"></i>
+                                </div>
+                                <div class="text-sm">认证服务</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 控制平面 -->
+                    <div class="absolute top-100 left-1/2 -translate-x-1/2 w-[90%] bg-gray-700/30 backdrop-blur-sm rounded-lg p-4 border border-gray-600">
+                        <div class="text-center font-bold mb-2">控制平面</div>
+                        <div class="flex flex-wrap justify-center gap-6">
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-accent/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-cogs text-accent"></i>
+                                </div>
+                                <div class="text-sm">AgenticAI控制器</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-accent/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-tasks text-accent"></i>
+                                </div>
+                                <div class="text-sm">智能体调度器</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-accent/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-gavel text-accent"></i>
+                                </div>
+                                <div class="text-sm">策略引擎</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-accent/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-file-text text-accent"></i>
+                                </div>
+                                <div class="text-sm">审计服务</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 数据平面 -->
+                    <div class="absolute top-160 left-1/2 -translate-x-1/2 w-[90%] bg-gray-700/30 backdrop-blur-sm rounded-lg p-4 border border-gray-600">
+                        <div class="text-center font-bold mb-2">数据平面</div>
+                        <div class="flex flex-wrap justify-center gap-6">
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-secondary/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-bolt text-secondary"></i>
+                                </div>
+                                <div class="text-sm">智能体运行时</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-secondary/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-plug text-secondary"></i>
+                                </div>
+                                <div class="text-sm">工具网关</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-secondary/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-shield text-secondary"></i>
+                                </div>
+                                <div class="text-sm">沙箱管理器</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-secondary/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-database text-secondary"></i>
+                                </div>
+                                <div class="text-sm">向量代理</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 基础设施层 -->
+                    <div class="absolute top-220 left-1/2 -translate-x-1/2 w-[85%] bg-gray-700/30 backdrop-blur-sm rounded-lg p-4 border border-gray-600">
+                        <div class="text-center font-bold mb-2">基础设施层</div>
+                        <div class="flex flex-wrap justify-center gap-6">
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-gray-500/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-cubes text-gray-400"></i>
+                                </div>
+                                <div class="text-sm">Kubernetes集群</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-gray-500/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-sitemap text-gray-400"></i>
+                                </div>
+                                <div class="text-sm">向量数据库</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-gray-500/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-bar-chart text-gray-400"></i>
+                                </div>
+                                <div class="text-sm">指标数据库</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 mx-auto bg-gray-500/20 rounded-lg flex items-center justify-center mb-1">
+                                    <i class="fa fa-share-alt text-gray-400"></i>
+                                </div>
+                                <div class="text-sm">追踪数据库</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 连接线 -->
+                    <div class="absolute top-36 left-1/2 -translate-x-1/2 w-1 h-4 bg-gradient-to-b from-primary to-info"></div>
+                    <div class="absolute top-96 left-1/2 -translate-x-1/2 w-1 h-4 bg-gradient-to-b from-info to-accent"></div>
+                    <div class="absolute top-156 left-1/2 -translate-x-1/2 w-1 h-4 bg-gradient-to-b from-accent to-secondary"></div>
+                    <div class="absolute top-216 left-1/2 -translate-x-1/2 w-1 h-4 bg-gradient-to-b from-secondary to-gray-500"></div>
+
+                    <!-- 安全与可观测性 -->
+                    <div class="absolute top-100 right-4 w-48 bg-gray-700/30 backdrop-blur-sm rounded-lg p-3 border border-gray-600">
+                        <div class="text-center font-bold mb-2 text-sm">安全与治理</div>
+                        <div class="flex items-center text-xs mb-1">
+                            <i class="fa fa-id-card text-primary mr-2"></i>
+                            <span>SPIFFE身份认证</span>
+                        </div>
+                        <div class="flex items-center text-xs mb-1">
+                            <i class="fa fa-lock text-primary mr-2"></i>
+                            <span>RBAC权限控制</span>
+                        </div>
+                        <div class="flex items-center text-xs">
+                            <i class="fa fa-check-square-o text-primary mr-2"></i>
+                            <span>合规监控</span>
+                        </div>
+                    </div>
+
+                    <div class="absolute top-160 left-4 w-48 bg-gray-700/30 backdrop-blur-sm rounded-lg p-3 border border-gray-600">
+                        <div class="text-center font-bold mb-2 text-sm">可观测性</div>
+                        <div class="flex items-center text-xs mb-1">
+                            <i class="fa fa-line-chart text-info mr-2"></i>
+                            <span>Prometheus指标</span>
+                        </div>
+                        <div class="flex items-center text-xs mb-1">
+                            <i class="fa fa-random text-info mr-2"></i>
+                            <span>Jaeger追踪</span>
+                        </div>
+                        <div class="flex items-center text-xs">
+                            <i class="fa fa-dashboard text-info mr-2"></i>
+                            <span>Grafana可视化</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 技术指标 -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+                <h3 class="text-xl font-bold mb-4">性能指标</h3>
+                <ul class="space-y-3">
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-300">P95响应延迟</span>
+                        <span class="font-medium text-primary">&lt; 100ms</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-300">GPU利用率</span>
+                        <span class="font-medium text-primary">&gt; 80%</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-300">系统可用性</span>
+                        <span class="font-medium text-primary">&gt; 99.9%</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-300">任务成功率</span>
+                        <span class="font-medium text-primary">&gt; 95%</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+                <h3 class="text-xl font-bold mb-4">安全指标</h3>
+                <ul class="space-y-3">
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-300">审计覆盖率</span>
+                        <span class="font-medium text-info">100%</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-300">安全漏洞修复时间</span>
+                        <span class="font-medium text-info">&lt; 24小时</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-300">身份认证成功率</span>
+                        <span class="font-medium text-info">&gt; 99.99%</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-300">安全事件发生率</span>
+                        <span class="font-medium text-info">降低90%</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+                <h3 class="text-xl font-bold mb-4">成本指标</h3>
+                <ul class="space-y-3">
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-300">每任务平均成本</span>
+                        <span class="font-medium text-secondary">可精确追踪</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-300">资源利用率可视化</span>
+                        <span class="font-medium text-secondary">实时监控</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-300">成本预测准确率</span>
+                        <span class="font-medium text-secondary">&gt; 90%</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-300">总体拥有成本</span>
+                        <span class="font-medium text-secondary">降低30%</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 核心特性部分 -->
+<section id="features" class="py-24 bg-gray-900 relative">
+    <div class="absolute inset-0 bg-grid opacity-30"></div>
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-display font-bold mb-6">
+                强大的<span class="bg-gradient-to-r from-primary to-info text-gradient">核心特性</span>
+            </h2>
+            <p class="text-xl text-gray-300">
+                为企业级AI智能体部署提供全方位支持
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-12">
+            <!-- 特性卡片 -->
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden group hover:border-primary/50 transition-all">
+                <div class="h-48 overflow-hidden">
+                    <img src="https://picsum.photos/id/30/600/400" alt="多层安全防护" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mr-3">
+                            <i class="fa fa-shield text-primary"></i>
+                        </div>
+                        <h3 class="text-xl font-bold">多层安全防护体系</h3>
+                    </div>
+                    <ul class="space-y-2 text-gray-300">
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>基于SPIFFE的工作负载身份认证</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>多种沙箱运行时提供强隔离（gVisor、Kata Containers等）</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>端到端的API管理和访问控制</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>完整的审计日志和合规性监控</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden group hover:border-primary/50 transition-all">
+                <div class="h-48 overflow-hidden">
+                    <img src="https://picsum.photos/id/31/600/400" alt="云原生资源管理" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center mr-3">
+                            <i class="fa fa-server text-info"></i>
+                        </div>
+                        <h3 class="text-xl font-bold">云原生资源管理</h3>
+                    </div>
+                    <ul class="space-y-2 text-gray-300">
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>Kubernetes原生的资源调度和编排</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>GPU感知的动态资源分配（DRA）</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>拓扑感知调度优化性能</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>RDMA高性能网络支持</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden group hover:border-primary/50 transition-all">
+                <div class="h-48 overflow-hidden">
+                    <img src="https://picsum.photos/id/32/600/400" alt="全链路可观测性" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center mr-3">
+                            <i class="fa fa-eye text-secondary"></i>
+                        </div>
+                        <h3 class="text-xl font-bold">全链路可观测性</h3>
+                    </div>
+                    <ul class="space-y-2 text-gray-300">
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>OpenTelemetry标准化的追踪、指标和日志</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>实时性能监控和告警</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>分布式追踪支持复杂调用链分析</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>成本透明化和优化建议</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden group hover:border-primary/50 transition-all">
+                <div class="h-48 overflow-hidden">
+                    <img src="https://picsum.photos/id/33/600/400" alt="标准化工具生态" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mr-3">
+                            <i class="fa fa-puzzle-piece text-accent"></i>
+                        </div>
+                        <h3 class="text-xl font-bold">标准化工具生态</h3>
+                    </div>
+                    <ul class="space-y-2 text-gray-300">
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>MCP（模型上下文协议）统一工具接口</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>OpenAPI Gateway简化传统API集成</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>可插拔的工具发现和管理机制</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check text-secondary mt-1 mr-2"></i>
+                            <span>向量数据库集成支持RAG能力</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 技术栈 -->
+        <div class="mt-20 bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-8">
+            <h3 class="text-2xl font-bold mb-8 text-center">核心技术栈</h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div class="bg-gray-700/30 rounded-lg p-4 text-center">
+                    <div class="text-3xl mb-2">
+                        <i class="fa fa-golang text-primary"></i>
+                    </div>
+                    <div class="font-medium">Go 1.21+</div>
+                    <div class="text-sm text-gray-400">核心服务开发</div>
+                </div>
+
+                <div class="bg-gray-700/30 rounded-lg p-4 text-center">
+                    <div class="text-3xl mb-2">
+                        <i class="fa fa-python text-primary"></i>
+                    </div>
+                    <div class="font-medium">Python</div>
+                    <div class="text-sm text-gray-400">AI模型集成</div>
+                </div>
+
+                <div class="bg-gray-700/30 rounded-lg p-4 text-center">
+                    <div class="text-3xl mb-2">
+                        <i class="fa fa-kubernetes text-primary"></i>
+                    </div>
+                    <div class="font-medium">Kubernetes 1.28+</div>
+                    <div class="text-sm text-gray-400">容器编排</div>
+                </div>
+
+                <div class="bg-gray-700/30 rounded-lg p-4 text-center">
+                    <div class="text-3xl mb-2">
+                        <i class="fa fa-database text-primary"></i>
+                    </div>
+                    <div class="font-medium">Milvus/Qdrant</div>
+                    <div class="text-sm text-gray-400">向量数据库</div>
+                </div>
+
+                <div class="bg-gray-700/30 rounded-lg p-4 text-center">
+                    <div class="text-3xl mb-2">
+                        <i class="fa fa-line-chart text-primary"></i>
+                    </div>
+                    <div class="font-medium">Prometheus</div>
+                    <div class="text-sm text-gray-400">指标监控</div>
+                </div>
+
+                <div class="bg-gray-700/30 rounded-lg p-4 text-center">
+                    <div class="text-3xl mb-2">
+                        <i class="fa fa-random text-primary"></i>
+                    </div>
+                    <div class="font-medium">Jaeger</div>
+                    <div class="text-sm text-gray-400">分布式追踪</div>
+                </div>
+
+                <div class="bg-gray-700/30 rounded-lg p-4 text-center">
+                    <div class="text-3xl mb-2">
+                        <i class="fa fa-shield text-primary"></i>
+                    </div>
+                    <div class="font-medium">gVisor/Kata</div>
+                    <div class="text-sm text-gray-400">沙箱运行时</div>
+                </div>
+
+                <div class="bg-gray-700/30 rounded-lg p-4 text-center">
+                    <div class="text-3xl mb-2">
+                        <i class="fa fa-exchange text-primary"></i>
+                    </div>
+                    <div class="font-medium">gRPC/REST</div>
+                    <div class="text-sm text-gray-400">服务通信</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 路线图部分 -->
+<section id="roadmap" class="py-24 relative">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-display font-bold mb-6">
+                清晰的<span class="bg-gradient-to-r from-primary to-info text-gradient">发展路线图</span>
+            </h2>
+            <p class="text-xl text-gray-300">
+                持续迭代，不断增强平台能力，满足企业日益增长的AI智能体部署需求
+            </p>
+        </div>
+
+        <!-- 路线图时间线 -->
+        <div class="relative">
+            <!-- 中心轴线 -->
+            <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-info to-secondary transform -translate-x-1/2"></div>
+
+            <!-- 阶段1 -->
+            <div class="relative mb-16">
+                <div class="flex flex-col md:flex-row items-center">
+                    <div class="md:w-1/2 md:pr-12 md:text-right mb-8 md:mb-0">
+                        <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-primary p-6 md:ml-auto md:max-w-md">
+                            <div class="inline-block px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium mb-4">阶段 1</div>
+                            <h3 class="text-xl font-bold mb-2">核心平台MVP</h3>
+                            <p class="text-gray-300 mb-4">基础智能体执行能力，支持核心功能和基本部署流程</p>
+                            <ul class="space-y-2 text-gray-300">
+                                <li class="flex justify-end items-center">
+                                    <span>智能体运行时基础架构</span>
+                                    <i class="fa fa-check text-primary ml-2"></i>
+                                </li>
+                                <li class="flex justify-end items-center">
+                                    <span>基本工具集成能力</span>
+                                    <i class="fa fa-check text-primary ml-2"></i>
+                                </li>
+                                <li class="flex justify-end items-center">
+                                    <span>简单的资源调度</span>
+                                    <i class="fa fa-check text-primary ml-2"></i>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 时间点标记 -->
+                    <div class="absolute left-1/2 w-6 h-6 rounded-full bg-primary transform -translate-x-1/2 z-10 border-4 border-dark"></div>
+
+                    <div class="md:w-1/2 md:pl-12 hidden md:block">
+                        <div class="text-sm text-gray-400">已完成</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 阶段2 -->
+            <div class="relative mb-16">
+                <div class="flex flex-col md:flex-row items-center">
+                    <div class="md:w-1/2 md:pr-12 hidden md:block">
+                        <div class="text-sm text-gray-400">进行中</div>
+                    </div>
+
+                    <!-- 时间点标记 -->
+                    <div class="absolute left-1/2 w-6 h-6 rounded-full bg-info transform -translate-x-1/2 z-10 border-4 border-dark animate-pulse"></div>
+
+                    <div class="md:w-1/2 md:pl-12 mb-8 md:mb-0">
+                        <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-info p-6 md:mr-auto md:max-w-md">
+                            <div class="inline-block px-3 py-1 bg-info/20 text-info rounded-full text-sm font-medium mb-4">阶段 2</div>
+                            <h3 class="text-xl font-bold mb-2">增强安全性</h3>
+                            <p class="text-gray-300 mb-4">多沙箱支持和强化的安全控制，满足企业级安全需求</p>
+                            <ul class="space-y-2 text-gray-300">
+                                <li class="flex items-center">
+                                    <i class="fa fa-spinner fa-spin text-info mr-2"></i>
+                                    <span>多沙箱运行时支持</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fa fa-spinner fa-spin text-info mr-2"></i>
+                                    <span>增强的身份认证与授权</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fa fa-spinner fa-spin text-info mr-2"></i>
+                                    <span>安全审计日志完善</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 阶段3 -->
+            <div class="relative mb-16">
+                <div class="flex flex-col md:flex-row items-center">
+                    <div class="md:w-1/2 md:pr-12 md:text-right mb-8 md:mb-0">
+                        <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-secondary p-6 md:ml-auto md:max-w-md">
+                            <div class="inline-block px-3 py-1 bg-secondary/20 text-secondary rounded-full text-sm font-medium mb-4">阶段 3</div>
+                            <h3 class="text-xl font-bold mb-2">高级可观测性和成本优化</h3>
+                            <p class="text-gray-300 mb-4">全面的监控能力和智能成本优化，提升资源利用率</p>
+                            <ul class="space-y-2 text-gray-300">
+                                <li class="flex justify-end items-center">
+                                    <span>全链路可观测性平台</span>
+                                    <i class="fa fa-clock-o text-secondary ml-2"></i>
+                                </li>
+                                <li class="flex justify-end items-center">
+                                    <span>智能资源调度与优化</span>
+                                    <i class="fa fa-clock-o text-secondary ml-2"></i>
+                                </li>
+                                <li class="flex justify-end items-center">
+                                    <span>成本分析与优化建议</span>
+                                    <i class="fa fa-clock-o text-secondary ml-2"></i>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 时间点标记 -->
+                    <div class="absolute left-1/2 w-6 h-6 rounded-full bg-secondary transform -translate-x-1/2 z-10 border-4 border-dark"></div>
+
+                    <div class="md:w-1/2 md:pl-12 hidden md:block">
+                        <div class="text-sm text-gray-400">计划中 · 2025 Q4</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 阶段4 -->
+            <div class="relative">
+                <div class="flex flex-col md:flex-row items-center">
+                    <div class="md:w-1/2 md:pr-12 hidden md:block">
+                        <div class="text-sm text-gray-400">计划中 · 2025 Q1</div>
+                    </div>
+
+                    <!-- 时间点标记 -->
+                    <div class="absolute left-1/2 w-6 h-6 rounded-full bg-accent transform -translate-x-1/2 z-10 border-4 border-dark"></div>
+
+                    <div class="md:w-1/2 md:pl-12">
+                        <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-accent p-6 md:mr-auto md:max-w-md">
+                            <div class="inline-block px-3 py-1 bg-accent/20 text-accent rounded-full text-sm font-medium mb-4">阶段 4</div>
+                            <h3 class="text-xl font-bold mb-2">企业功能和认证合规</h3>
+                            <p class="text-gray-300 mb-4">企业级高级功能和行业合规认证，满足严格监管要求</p>
+                            <ul class="space-y-2 text-gray-300">
+                                <li class="flex items-center">
+                                    <i class="fa fa-clock-o text-accent mr-2"></i>
+                                    <span>多租户隔离与管理</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fa fa-clock-o text-accent mr-2"></i>
+                                    <span>行业合规认证支持</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fa fa-clock-o text-accent mr-2"></i>
+                                    <span>企业级支持与服务</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA部分 -->
+<section class="py-24 bg-gradient-to-br from-primary/20 to-info/20 relative overflow-hidden">
+    <!-- 背景装饰 -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full filter blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 bg-info/10 rounded-full filter blur-3xl"></div>
+    </div>
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-[clamp(2rem,5vw,3rem)] font-display font-bold mb-6">
+                准备好重新定义你的AI智能体部署了吗？
+            </h2>
+            <p class="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
+                加入全球200+企业的行列，体验AgenticAI Platform带来的效率提升、成本优化和安全保障。
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button class="bg-gradient-to-r from-primary to-info px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:shadow-primary/20 transition-all transform hover:-translate-y-1">
+                    立即开始 <i class="fa fa-arrow-right ml-2"></i>
+                </button>
+                <button class="border border-gray-700 bg-dark/50 backdrop-blur-sm px-8 py-4 rounded-xl font-semibold text-lg hover:bg-dark/80 transition-all">
+                    <i class="fa fa-calendar mr-2"></i> 预约演示
+                </button>
+            </div>
+
+            <div class="mt-16 pt-8 border-t border-gray-700/50">
+                <div class="flex flex-wrap justify-center gap-8 md:gap-16">
+                    <div class="text-center">
+                        <div class="text-4xl font-bold bg-gradient-to-r from-primary to-info text-gradient mb-2">200+</div>
+                        <div class="text-gray-300">企业用户</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-bold bg-gradient-to-r from-primary to-info text-gradient mb-2">99.9%</div>
+                        <div class="text-gray-300">系统可用性</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-bold bg-gradient-to-r from-primary to-info text-gradient mb-2">80%+</div>
+                        <div class="text-gray-300">GPU利用率</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-bold bg-gradient-to-r from-primary to-info text-gradient mb-2">30%</div>
+                        <div class="text-gray-300">成本降低</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 页脚 -->
+<footer class="bg-gray-900 py-12 border-t border-gray-800">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+            <div>
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-info flex items-center justify-center mr-3">
+                        <i class="fa fa-robot text-white text-xl"></i>
+                    </div>
+                    <span class="text-xl font-display font-bold bg-gradient-to-r from-primary to-info text-gradient">AgenticAI</span>
+                </div>
+                <p class="text-gray-400 mb-4">
+                    企业级云原生智能体AI基础设施平台，重新定义AI智能体的部署与管理方式。
+                </p>
+                <div class="flex space-x-4">
+                    <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-colors">
+                        <i class="fa fa-github"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-colors">
+                        <i class="fa fa-twitter"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-colors">
+                        <i class="fa fa-linkedin"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-lg font-bold mb-4">产品</h4>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">功能特性</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">技术架构</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">定价方案</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">路线图</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">更新日志</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-lg font-bold mb-4">资源</h4>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">文档中心</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">API参考</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">示例代码</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">最佳实践</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">社区论坛</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
+            <div class="text-gray-500 text-sm mb-4 md:mb-0">
+                &copy; 2025 AgenticAI. 保留所有权利.
+            </div>
+            <div class="flex space-x-6">
+                <a href="#" class="text-gray-500 hover:text-gray-300 text-sm">隐私政策</a>
+                <a href="#" class="text-gray-500 hover:text-gray-300 text-sm">服务条款</a>
+                <a href="#" class="text-gray-500 hover:text-gray-300 text-sm">安全政策</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // 导航栏滚动效果
+    window.addEventListener('scroll', function() {
+        const navbar = document.getElementById('navbar');
+        if (window.scrollY > 50) {
+            navbar.classList.add('py-2');
+            navbar.classList.remove('py-4');
+            navbar.classList.add('bg-dark/95');
+            navbar.classList.remove('bg-dark/80');
+        } else {
+            navbar.classList.add('py-4');
+            navbar.classList.remove('py-2');
+            navbar.classList.add('bg-dark/80');
+            navbar.classList.remove('bg-dark/95');
+        }
+    });
+
+    // 移动端菜单切换
+    document.getElementById('menuBtn').addEventListener('click', function() {
+        const mobileMenu = document.getElementById('mobileMenu');
+        mobileMenu.classList.toggle('hidden');
+    });
+
+    // 平滑滚动
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+
+            if (targetElement) {
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+
+                // 关闭移动菜单
+                document.getElementById('mobileMenu').classList.add('hidden');
+            }
+        });
+    });
+
+    // 性能对比图表
+    const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+    new Chart(performanceCtx, {
+        type: 'bar',
+        data: {
+            labels: ['任务执行效率', '开发部署周期', 'GPU利用率', '系统可用性'],
+            datasets: [
+                {
+                    label: '传统方案',
+                    data: [30, 80, 35, 95],
+                    backgroundColor: 'rgba(156, 163, 175, 0.5)',
+                    borderColor: 'rgba(156, 163, 175, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'AgenticAI平台',
+                    data: [70, 32, 82, 99.9],
+                    backgroundColor: 'rgba(99, 102, 241, 0.5)',
+                    borderColor: 'rgba(99, 102, 241, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: 'rgba(209, 213, 219, 1)'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += context.parsed.y + (context.dataIndex === 3 ? '%' : (context.dataIndex === 1 ? '天' : '%'));
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: 'rgba(209, 213, 219, 0.7)'
+                    },
+                    grid: {
+                        color: 'rgba(75, 85, 99, 0.2)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: 'rgba(209, 213, 219, 0.7)'
+                    },
+                    grid: {
+                        color: 'rgba(75, 85, 99, 0.2)'
+                    }
+                }
+            }
+        }
+    });
+
+    // 风险降低图表
+    const riskCtx = document.getElementById('riskChart').getContext('2d');
+    new Chart(riskCtx, {
+        type: 'radar',
+        data: {
+            labels: [
+                '安全事件发生率',
+                '合规审计通过率',
+                '故障恢复时间',
+                '数据安全性',
+                '访问控制强度'
+            ],
+            datasets: [
+                {
+                    label: '传统方案',
+                    data: [70, 60, 30, 50, 55],
+                    fill: true,
+                    backgroundColor: 'rgba(156, 163, 175, 0.2)',
+                    borderColor: 'rgba(156, 163, 175, 1)',
+                    pointBackgroundColor: 'rgba(156, 163, 175, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(156, 163, 175, 1)'
+                },
+                {
+                    label: 'AgenticAI平台',
+                    data: [10, 100, 90, 95, 90],
+                    fill: true,
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
+                }
+            ]
+        },
+        options: {
+            elements: {
+                line: {
+                    borderWidth: 3
+                }
+            },
+            scales: {
+                r: {
+                    angleLines: {
+                        color: 'rgba(75, 85, 99, 0.2)'
+                    },
+                    grid: {
+                        color: 'rgba(75, 85, 99, 0.2)'
+                    },
+                    pointLabels: {
+                        color: 'rgba(209, 213, 219, 0.7)'
+                    },
+                    ticks: {
+                        color: 'rgba(209, 213, 219, 0.5)',
+                        backdropColor: 'transparent'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: 'rgba(209, 213, 219, 1)'
+                    }
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>
