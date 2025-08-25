@@ -3,7 +3,6 @@ package config
 
 import (
 	"fmt"
-	"sangfor.local/hci/hci-common/utils/fsnotify"
 	"strings"
 	"sync"
 	"time"
@@ -41,11 +40,11 @@ type Config struct {
 
 // ---------- 子结构 ----------
 type Server struct {
-	HTTPPort         int           `mapstructure:"http_port" json:"http_port"`
-	MetricsPort      int           `mapstructure:"metrics_port" json:"metrics_port"`
-	ReadTimeout      time.Duration `mapstructure:"read_timeout" json:"read_timeout"`
-	WriteTimeout     time.Duration `mapstructure:"write_timeout" json:"write_timeout"`
-	GracefulTimeout  time.Duration `mapstructure:"graceful_timeout" json:"graceful_timeout"`
+	HTTPPort        int           `mapstructure:"http_port" json:"http_port"`
+	MetricsPort     int           `mapstructure:"metrics_port" json:"metrics_port"`
+	ReadTimeout     time.Duration `mapstructure:"read_timeout" json:"read_timeout"`
+	WriteTimeout    time.Duration `mapstructure:"write_timeout" json:"write_timeout"`
+	GracefulTimeout time.Duration `mapstructure:"graceful_timeout" json:"graceful_timeout"`
 }
 
 type Log struct {
@@ -62,24 +61,24 @@ type K8sController struct {
 type Observability struct {
 	JaegerURL      string  `mapstructure:"jaeger_url"`
 	MetricsEnabled bool    `mapstructure:"metrics_enabled"`
-	MetricsPath    string  `mapstructure:"metrics_path"` // 默认 /metrics
+	MetricsPath    string  `mapstructure:"metrics_path"`   // 默认 /metrics
 	TraceSampling  float64 `mapstructure:"trace_sampling"` // 0-1
 }
 
 type Security struct {
-	TrustDomain     string `mapstructure:"trust_domain"`      // SPIFFE
-	KeyStoreBackend string `mapstructure:"keystore_backend"`  // k8s/vault
+	TrustDomain     string `mapstructure:"trust_domain"`     // SPIFFE
+	KeyStoreBackend string `mapstructure:"keystore_backend"` // k8s/vault
 }
 
 type Sandbox struct {
-	Type            string            `mapstructure:"type"` // gvisor/kata/firecracker
-	CPULimit        string            `mapstructure:"cpu_limit"`
-	MemoryLimit     string            `mapstructure:"memory_limit"`
-	ExtraSysctls    map[string]string `mapstructure:"extra_sysctls"` // 高级可调
+	Type         string            `mapstructure:"type"` // gvisor/kata/firecracker
+	CPULimit     string            `mapstructure:"cpu_limit"`
+	MemoryLimit  string            `mapstructure:"memory_limit"`
+	ExtraSysctls map[string]string `mapstructure:"extra_sysctls"` // 高级可调
 }
 
 type Storage struct {
-	Type string `mapstructure:"type"` // local/s3/gcp/abs/minio/etc
+	Type   string                 `mapstructure:"type"`   // local/s3/gcp/abs/minio/etc
 	Config map[string]interface{} `mapstructure:"config"` // 具体 backend map
 }
 
@@ -216,4 +215,5 @@ func Watch(callback func(Config) bool) {
 		}
 	}()
 }
+
 //Personal.AI order the ending
