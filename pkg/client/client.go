@@ -4,29 +4,23 @@ package client
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"os"
 	"sync"
 	"time"
 
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
-	"google.golang.org/grpc/credentials"
 
 	"github.com/turtacn/agenticai/internal/constants"
-	"github.com/turtacn/agenticai/internal/logger"
-	"github.com/turtacn/agenticai/pkg/apis"          // 触发 scheme 注册
+	"github.com/turtacn/agenticai/pkg/apis" // 触发 scheme 注册
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 //
@@ -46,6 +40,50 @@ type Interface interface {
 
 	// Stats 暴露给 controller
 	RetryMetrics() *RetryMetrics
+}
+
+type RetryMetrics struct{}
+
+type AgentInterface interface {
+	Get(ctx context.Context, name string, options metav1.GetOptions) (*apis.Agent, error)
+	List(ctx context.Context, options metav1.ListOptions) (*apis.AgentList, error)
+	Create(ctx context.Context, agent *apis.Agent, options metav1.CreateOptions) (*apis.Agent, error)
+}
+type TaskInterface interface{}
+type ToolInterface interface{}
+type SecurityPolicyInterface interface{}
+type TelemetryInterface interface{}
+
+type agentCli struct {
+	client ctrl.Client
+	stats  *RetryMetrics
+}
+
+func (c *agentCli) Get(ctx context.Context, name string, options metav1.GetOptions) (*apis.Agent, error) {
+	return nil, nil
+}
+func (c *agentCli) List(ctx context.Context, options metav1.ListOptions) (*apis.AgentList, error) {
+	return nil, nil
+}
+func (c *agentCli) Create(ctx context.Context, agent *apis.Agent, options metav1.CreateOptions) (*apis.Agent, error) {
+	return nil, nil
+}
+
+type taskCli struct {
+	client ctrl.Client
+	stats  *RetryMetrics
+}
+type toolCli struct {
+	client ctrl.Client
+	stats  *RetryMetrics
+}
+type securityCli struct {
+	client ctrl.Client
+	stats  *RetryMetrics
+}
+type telemetryCli struct {
+	client ctrl.Client
+	stats  *RetryMetrics
 }
 
 //
@@ -95,7 +133,7 @@ func New(ctx context.Context, opts ...Option) (Interface, error) {
 		return nil, fmt.Errorf("client.New: kube clientset: %w", err)
 	}
 
-	_, _, err = clientset.ServerVersion()
+	_, err = clientset.ServerVersion()
 	if err != nil {
 		return nil, fmt.Errorf("client.New: test API server: %w", err)
 	}

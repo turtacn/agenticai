@@ -4,16 +4,13 @@ package scheduler
 import (
 	"context"
 	"fmt"
-	"sort"
-	"time"
 
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/turtacn/agenticai/internal/logger"
-	apiv1 "github.com/turtacn/agenticai/pkg/apis"
+	agenticaiov1 "github.com/turtacn/agenticai/pkg/apis/agenticai.io/v1"
 )
 
 //
@@ -21,7 +18,7 @@ import (
 //
 type Scheduler interface {
 	// Schedule schedules one task once.
-	Schedule(context.Context, *apiv1.Task) (*ScheduleResult, error)
+	Schedule(context.Context, *agenticaiov1.Task) (*ScheduleResult, error)
 }
 
 //
@@ -35,28 +32,30 @@ type ScheduleResult struct {
 // defaultScheduler
 //
 type defaultScheduler struct {
-	kube    client.Client
-	rm      ResourceManager // 共享的缓存
-	scorer  ScoreFunc
+	kube client.Client
+	rm   ResourceManager // 共享的缓存
+	// scorer  ScoreFunc // TODO: Implement scoring
 }
+
+type ScoreFunc func(task *agenticaiov1.Task, agent *AgentSnapshot) int
 
 // Provide default impl
 func NewDefault(kube client.Client) Scheduler {
-	return New(kube, LeastWasteScore)
+	return New(kube, nil) // TODO: Implement scoring
 }
 
 func New(kube client.Client, scorer ScoreFunc) Scheduler {
 	return &defaultScheduler{
-		kube:    kube,
-		rm:      NewResourceManager(kube),
-		scorer:  scorer,
+		kube: kube,
+		rm:   NewResourceManager(kube),
+		// scorer:  scorer,
 	}
 }
 
 //
 // Schedule entry
 //
-func (s *defaultScheduler) Schedule(ctx context.Context, task *apiv1.Task) (*ScheduleResult, error) {
+func (s *defaultScheduler) Schedule(ctx context.Context, task *agenticaiov1.Task) (*ScheduleResult, error) {
 	ctx, span := trace.SpanFromContext(ctx).TracerProvider().
 		Tracer("pkg/scheduler").
 		Start(ctx, "Schedule")
@@ -73,9 +72,9 @@ func (s *defaultScheduler) Schedule(ctx context.Context, task *apiv1.Task) (*Sch
 	}
 
 	// 打分排序
-	sort.Slice(candidates, func(i, j int) bool {
-		return s.scorer(task, candidates[i]) > s.scorer(task, candidates[j])
-	})
+	// sort.Slice(candidates, func(i, j int) bool {
+	// 	return s.scorer(task, candidates[i]) > s.scorer(task, candidates[j])
+	// })
 	best := candidates[0]
 
 	// 写回 reserved capacity

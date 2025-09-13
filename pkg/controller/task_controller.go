@@ -11,19 +11,15 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"k8s.io/utils/pointer"
 
 	agenticaiov1 "github.com/turtacn/agenticai/pkg/apis/agenticai.io/v1"
-	"github.com/turtacn/agenticai/internal/constants"
-	e "github.com/turtacn/agenticai/internal/errors"
 	"github.com/turtacn/agenticai/internal/logger"
 )
 

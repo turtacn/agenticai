@@ -337,37 +337,24 @@ type Orchestrator interface {
 
 ```mermaid
 sequenceDiagram
-    participant U as 用户（User）
-    participant CLI as CLI工具
-    participant API as API网关
-    participant CTRL as 控制器
-    participant SCHED as 调度器
-    participant AGENT as 智能体运行时
-    participant TOOL as 工具网关
-    participant VDB as 向量数据库
-    participant OBS as 可观测性系统
-    
-    U->>CLI: actl deploy agent
-    CLI->>API: HTTP请求 + 认证令牌
-    API->>CTRL: 转发请求
-    CTRL->>SCHED: 创建调度任务
-    SCHED->>AGENT: 启动智能体实例
-    
-    Note over AGENT: 智能体开始执行任务
-    
-    AGENT->>TOOL: 调用工具接口
-    TOOL->>VDB: 向量检索请求
-    VDB-->>TOOL: 返回检索结果
-    TOOL-->>AGENT: 返回工具执行结果
-    
-    Note over AGENT,OBS: 全程可观测性数据收集
-    
-    AGENT->>OBS: 发送指标、日志、追踪数据
-    AGENT-->>SCHED: 报告任务状态
-    SCHED-->>CTRL: 更新调度状态
-    CTRL-->>API: 返回执行结果
-    API-->>CLI: 响应用户请求
-    CLI-->>U: 显示执行状态
+    participant User as 用户 (User)
+    participant ACTL as actl CLI
+    participant K8s as Kubernetes API
+    participant Controller as AgenticAI Controller
+    participant Job as Kubernetes Job
+    participant Pod as Pod
+
+    User->>ACTL: actl task submit ...
+    ACTL->>K8s: Create(Task CRD)
+    K8s-->>Controller: Watch Event
+    Controller->>K8s: Create(Job)
+    K8s->>Pod: Create Pod
+    Pod-->>Controller: Update Status
+    Controller->>K8s: Update(Task CRD Status)
+    User->>ACTL: actl task status my-task
+    ACTL->>K8s: Get(Task CRD)
+    K8s-->>ACTL: Return Task Status
+    ACTL-->>User: Display Status
 ```
 
 ### 部署架构
@@ -439,8 +426,9 @@ agenticai/
 │       └── main.go             # 网关主入口
 ├── pkg/                          # 核心包
 │   ├── client/                  # 客户端SDK
-│   ├── types/                   # 核心类型定义
-│   ├── apis/                    # API定义
+│   ├── apis/                    # CRD API 定义
+│   │   └── agenticai.io/
+│   │       └── v1/              # API 版本
 │   ├── controller/              # 控制器逻辑
 │   ├── scheduler/               # 调度器
 │   ├── agent/                   # 智能体核心

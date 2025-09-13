@@ -122,3 +122,7 @@ type Dependency struct {
 	TaskID string    `json:"taskId"`
 	State  TaskPhase `json:"state"`
 }
+
+func init() {
+	SchemeBuilder.Register(&Task{}, &TaskList{})
+}

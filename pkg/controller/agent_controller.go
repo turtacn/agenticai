@@ -3,14 +3,13 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"go.uber.org/zap"
 	"reflect"
 	"time"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,12 +17,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/turtacn/agenticai/internal/constants"
-	e "github.com/turtacn/agenticai/internal/errors"
 	"github.com/turtacn/agenticai/internal/logger"
-	apiv1 "github.com/turtacn/agenticai/pkg/apis"
+	"github.com/turtacn/agenticai/pkg/apis"
 )
 
 // AgentReconciler reconciles a Agent object
@@ -44,7 +41,7 @@ func (r *AgentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	)
 
 	// 1. 拉取 CR
-	var agent apiv1.Agent
+	var agent apis.Agent
 	if err := r.Get(ctx, req.NamespacedName, &agent); err != nil {
 		if errors.IsNotFound(err) {
 			// Object deleted, ignore
@@ -87,7 +84,7 @@ func (r *AgentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}, found)
 
 	if err != nil && errors.IsNotFound(err) {
-		log.Info("creating deployment", "deployment", deploy.Name)
+		log.Info("creating deployment", zap.String("deployment", deploy.Name))
 		if err := r.Create(ctx, deploy); err != nil {
 			log.Error("unable to create deployment", zap.Error(err))
 			return ctrl.Result{}, err
@@ -99,7 +96,7 @@ func (r *AgentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			log.Error("unable to update deployment", zap.Error(err))
 			return ctrl.Result{}, err
 		}
-		log.Info("deployment updated", "deployment", deploy.Name)
+		log.Info("deployment updated", zap.String("deployment", deploy.Name))
 	} else {
 		return ctrl.Result{}, err
 	}
@@ -122,7 +119,7 @@ func (r *AgentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 }
 
 // buildDeployment 拼装业务 + 沙箱 sidecars
-func (r *AgentReconciler) buildDeployment(agent *apiv1.Agent) (*appsv1.Deployment, error) {
+func (r *AgentReconciler) buildDeployment(agent *apis.Agent) (*appsv1.Deployment, error) {
 	podLabels := map[string]string{
 		"app.kubernetes.io/name":       constants.ProjectName,
 		"app.kubernetes.io/component":  "agent",
@@ -144,14 +141,14 @@ func (r *AgentReconciler) buildDeployment(agent *apiv1.Agent) (*appsv1.Deploymen
 		Image:           agent.Spec.ImageRef,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Resources:       agent.Spec.Resources,
-		Env:             envVars(agent.Spec.Env),
+		// Env:             envVars(agent.Spec.Env), // TODO: AgentSpec does not have Env
 	}
-	if len(agent.Spec.Command) > 0 {
-		mainContainer.Command = agent.Spec.Command
-	}
-	if len(agent.Spec.Args) > 0 {
-		mainContainer.Args = agent.Spec.Args
-	}
+	// if len(agent.Spec.Command) > 0 { // TODO: AgentSpec does not have Command
+	// 	mainContainer.Command = agent.Spec.Command
+	// }
+	// if len(agent.Spec.Args) > 0 { // TODO: AgentSpec does not have Args
+	// 	mainContainer.Args = agent.Spec.Args
+	// }
 
 	// 拼接 volume mounts & sidecar
 	podSpec := corev1.PodSpec{
@@ -184,7 +181,7 @@ func (r *AgentReconciler) buildDeployment(agent *apiv1.Agent) (*appsv1.Deploymen
 }
 
 // computeStatus 收集底层 deployment 状态到 AgentStatus
-func (r *AgentReconciler) computeStatus(ctx context.Context, agent *apiv1.Agent, delp *appsv1.Deployment) (*apiv1.AgentStatus, error) {
+func (r *AgentReconciler) computeStatus(ctx context.Context, agent *apis.Agent, delp *appsv1.Deployment) (*apis.AgentStatus, error) {
 	deployment := &appsv1.Deployment{}
 	if err := r.Get(ctx, types.NamespacedName{
 		Name:      delp.Name,
@@ -193,19 +190,18 @@ func (r *AgentReconciler) computeStatus(ctx context.Context, agent *apiv1.Agent,
 		return nil, err
 	}
 
-	sts := apiv1.AgentStatus{
+	sts := apis.AgentStatus{
 		DesiredReplicas: *deployment.Spec.Replicas,
 		ReadyReplicas:   deployment.Status.ReadyReplicas,
 		CurrentVersion:  deployment.Annotations["image-version"], // 自定义
-		Phase:           apiv1.AgentRunning,
+		Phase:           apis.AgentRunning,
 		Message:         "deployment healthy",
 	}
 	return &sts, nil
 }
 
-func (r *AgentReconciler) markFailed(ctx context.Context, agent *apiv1.Agent, err error) {
-	now := metav1.Now()
-	agent.Status.Phase = apiv1.AgentFailed
+func (r *AgentReconciler) markFailed(ctx context.Context, agent *apis.Agent, err error) {
+	agent.Status.Phase = apis.AgentFailed
 	agent.Status.Message = err.Error()
 	_ = r.Status().Update(ctx, agent)
 }
@@ -220,7 +216,7 @@ func envVars(src []corev1.EnvVar) []corev1.EnvVar {
 // SetupWithManager wired into controller-manager
 func (r *AgentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&apiv1.Agent{}).
+		For(&apis.Agent{}).
 		Owns(&appsv1.Deployment{}).
 		Complete(r)
 }

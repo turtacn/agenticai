@@ -35,7 +35,7 @@ type ToolSpec struct {
 	Author      string            `json:"author,omitempty"`
 	Category    string            `json:"category,omitempty"`
 	Tags        map[string]string `json:"tags,omitempty"`
-	ArgsSchema  runtime.RawExtension `json:"argsSchema,omitempty"`
+	ArgsSchema  AnyMap `json:"argsSchema,omitempty"`
 	Digest      string            `json:"digest,omitempty"`
 
 	// 运行方式（三者 1:N）
@@ -97,6 +97,52 @@ type CORSPolicy struct {
 type RateLimit struct {
 	Max    int32          `json:"max"`
 	Window *time.Duration `json:"window,omitempty"`
+}
+
+type Metadata struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Version     string `json:"version"`
+	Digest      string `json:"digest,omitempty"`
+}
+
+type ToolResult struct {
+	Output string `json:"output,omitempty"`
+	Error  string `json:"error,omitempty"`
+	Status int32  `json:"status,omitempty"`
+}
+
+type ToolFilter struct {
+	Name     string            `json:"name,omitempty"`
+	Category string            `json:"category,omitempty"`
+	Tags     map[string]string `json:"tags,omitempty"`
+}
+
+type MCPServerInfo struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
+type AnyMap map[string]interface{}
+
+func (in *AnyMap) DeepCopyInto(out *AnyMap) {
+	if in == nil {
+		*out = nil
+		return
+	}
+	*out = make(AnyMap, len(*in))
+	for key, val := range *in {
+		(*out)[key] = val
+	}
+}
+
+func (in *AnyMap) DeepCopy() *AnyMap {
+	if in == nil {
+		return nil
+	}
+	out := new(AnyMap)
+	in.DeepCopyInto(out)
+	return out
 }
 
 func init() {

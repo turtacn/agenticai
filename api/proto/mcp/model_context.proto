@@ -1,0 +1,28 @@
+// api/proto/mcp/model_context.proto
+syntax = "proto3";
+package agenticai.mcp.v1;
+
+option go_package = "github.com/turtacn/agenticai/pkg/gen/api/proto/mcp/v1";
+
+service ModelContextService {
+    rpc GetContext(GetContextRequest) returns (GetContextResponse);
+    rpc UpdateContext(UpdateRequest) returns (UpdateResponse);
+}
+
+message GetContextRequest {
+    string context_id = 1;
+}
+
+message GetContextResponse {
+    string data = 1;
+    int64 timestamp = 2;
+}
+
+message UpdateRequest {
+    string context_id = 1;
+    string data = 2;
+}
+
+message UpdateResponse {
+    bool success = 1;
+}

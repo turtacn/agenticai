@@ -80,111 +80,93 @@ AgenticAI Platform addresses these pain points by providing:
 
 ## Getting Started
 
+> **Note:** This project is currently in a heavy refactoring and stabilization phase. The instructions below are for developers looking to contribute.
+
 ### Prerequisites
 
-* Kubernetes 1.28+ cluster
-* kubectl configured
-* Go 1.21+ (for development)
-* Docker (for containerized deployment)
+* A working Kubernetes cluster (e.g., Kind, Minikube, Docker Desktop)
+* `kubectl` configured to access the cluster
+* Go 1.22+
+* Docker
 
-### Quick Installation
+### Developer Onboarding & Setup
 
-```bash
-# Install AgenticAI CLI
-go install github.com/turtacn/agenticai/cmd/actl@latest
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/turtacn/agenticai.git
+    cd agenticai
+    ```
 
-# Or using Docker
-docker pull turtacn/agenticai:latest
+2.  **Build all binaries:**
+    This will compile `actl`, `controller`, `agent-runtime`, and `tool-gateway` into the `./bin` directory.
+    ```bash
+    make build
+    ```
 
-# Deploy to Kubernetes
-actl install --config cluster-config.yaml
+3.  **Run tests:**
+    To ensure everything is working correctly, run the unit test suite.
+    ```bash
+    make test
+    ```
 
-# Verify installation
-actl status
-```
+4.  **Deploying to Kubernetes:**
+    Currently, deployment is a manual process. You will need to:
+    *   Build and push the container images for the `controller`, `agent-runtime`, and `tool-gateway`.
+    *   Apply the CRD manifests from the `config/crd` directory.
+    *   Apply the deployment manifests for the controllers (to be created in `config/manager`).
 
-### Basic Usage Example
+### Basic Usage Example (Developer-Focused)
+
+The primary way to interact with the platform is through its Custom Resources (CRDs). Here is an example of how to create a `Task` resource using the Go client libraries.
 
 ```go
 package main
 
 import (
     "context"
+    "fmt"
     "log"
+
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    "k8s.io/client-go/tools/clientcmd"
     
-    "github.com/turtacn/agenticai/pkg/client"
-    "github.com/turtacn/agenticai/pkg/types"
+    agenticaiov1 "github.com/turtacn/agenticai/pkg/apis/agenticai.io/v1"
+    "github.com/turtacn/agenticai/pkg/client/clientset/versioned"
 )
 
 func main() {
-    // Initialize AgenticAI client
-    client, err := client.NewClient(&client.Config{
-        Endpoint: "https://agenticai.example.com",
-        APIKey:   "your-api-key",
-    })
+    // Use your local kubeconfig
+    config, err := clientcmd.BuildConfigFromFlags("", "/path/to/your/kubeconfig")
     if err != nil {
         log.Fatal(err)
     }
 
-    // Create an agent task
-    task := &types.AgentTask{
-        Name:        "web-research",
-        Description: "Research latest AI developments",
-        Tools: []string{
-            "web-browser",
-            "document-analyzer",
-        },
-        Resources: &types.ResourceRequirements{
-            GPU: 1,
-            Memory: "4Gi",
-        },
-        SecurityPolicy: &types.SecurityPolicy{
-            SandboxRuntime: "gvisor",
-            NetworkPolicy:  "restricted",
-        },
-    }
-
-    // Submit task
-    result, err := client.SubmitTask(context.Background(), task)
+    // Create a clientset for our CRD
+    clientset, err := versioned.NewForConfig(config)
     if err != nil {
         log.Fatal(err)
     }
 
-    // Monitor execution
-    status, err := client.GetTaskStatus(context.Background(), result.TaskID)
+    // Define a new Task
+    task := &agenticaiov1.Task{
+        ObjectMeta: metav1.ObjectMeta{
+            Name:      "my-first-task",
+            Namespace: "default",
+        },
+        Spec: agenticaiov1.TaskSpec{
+            ImageRef: "ubuntu:latest",
+            Command:  []string{"echo", "Hello from AgenticAI!"},
+        },
+    }
+
+    // Create the Task in the cluster
+    createdTask, err := clientset.AgenticaiV1().Tasks("default").Create(context.TODO(), task, metav1.CreateOptions{})
     if err != nil {
         log.Fatal(err)
     }
 
-    log.Printf("Task Status: %s, Progress: %.2f%%", 
-               status.Phase, status.Progress*100)
+    fmt.Printf("Created Task: %s\n", createdTask.Name)
 }
-```
-
-### Command Line Demo
-
-```bash
-# Initialize a new agent workspace
-actl init my-agent-workspace
-
-# Deploy an agent with web browsing capabilities
-actl deploy agent \
-  --name research-agent \
-  --tools web-browser,document-analyzer \
-  --runtime gvisor \
-  --gpu 1
-
-# Monitor agent execution
-actl logs research-agent --follow
-
-# View performance metrics
-actl metrics --agent research-agent --duration 1h
-
-# Run benchmark tests
-actl benchmark run --suite webarena --agent research-agent
-
-# Check cost analysis
-actl cost analyze --timerange 24h
 ```
 
 ## Architecture Overview

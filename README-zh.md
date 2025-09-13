@@ -80,111 +80,93 @@ AgenticAI Platform 通过以下能力解决这些痛点：
 
 ## 快速开始
 
-### 前置要求
+> **注意:** 本项目目前正处于密集的重构和稳定化阶段。以下说明适用于希望参与贡献的开发者。
 
-* Kubernetes 1.28+ 集群
-* 已配置的 kubectl
-* Go 1.21+（用于开发）
-* Docker（用于容器化部署）
+### 环境依赖
 
-### 快速安装
+* 一个可用的 Kubernetes 集群 (例如 Kind, Minikube, Docker Desktop)
+* `kubectl` 已配置好并可以访问集群
+* Go 1.22+
+* Docker
 
-```bash
-# 安装 AgenticAI CLI
-go install github.com/turtacn/agenticai/cmd/actl@latest
+### 开发者入门与设置
 
-# 或使用 Docker
-docker pull turtacn/agenticai:latest
+1.  **克隆仓库:**
+    ```bash
+    git clone https://github.com/turtacn/agenticai.git
+    cd agenticai
+    ```
 
-# 部署到 Kubernetes
-actl install --config cluster-config.yaml
+2.  **构建所有二进制文件:**
+    此命令会将 `actl`, `controller`, `agent-runtime`, 和 `tool-gateway` 编译到 `./bin` 目录。
+    ```bash
+    make build
+    ```
 
-# 验证安装
-actl status
-```
+3.  **运行测试:**
+    为确保一切正常，请运行单元测试套件。
+    ```bash
+    make test
+    ```
 
-### 基本使用示例
+4.  **部署到 Kubernetes:**
+    目前，部署是一个手动过程。您需要：
+    *   为 `controller`, `agent-runtime`, 和 `tool-gateway` 构建并推送容器镜像。
+    *   应用 `config/crd` 目录下的 CRD 清单。
+    *   应用控制器的部署清单 (将在 `config/manager` 中创建)。
+
+### 基础用法示例 (面向开发者)
+
+与平台交互的主要方式是通过其自定义资源 (CRDs)。以下是如何使用 Go 客户端库创建一个 `Task` 资源的示例。
 
 ```go
 package main
 
 import (
     "context"
+    "fmt"
     "log"
+
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    "k8s.io/client-go/tools/clientcmd"
     
-    "github.com/turtacn/agenticai/pkg/client"
-    "github.com/turtacn/agenticai/pkg/types"
+    agenticaiov1 "github.com/turtacn/agenticai/pkg/apis/agenticai.io/v1"
+    "github.com/turtacn/agenticai/pkg/client/clientset/versioned"
 )
 
 func main() {
-    // 初始化 AgenticAI 客户端
-    client, err := client.NewClient(&client.Config{
-        Endpoint: "https://agenticai.example.com",
-        APIKey:   "your-api-key",
-    })
+    // 使用您的本地 kubeconfig
+    config, err := clientcmd.BuildConfigFromFlags("", "/path/to/your/kubeconfig")
     if err != nil {
         log.Fatal(err)
     }
 
-    // 创建智能体任务
-    task := &types.AgentTask{
-        Name:        "web-research",
-        Description: "研究最新AI发展动态",
-        Tools: []string{
-            "web-browser",
-            "document-analyzer",
-        },
-        Resources: &types.ResourceRequirements{
-            GPU: 1,
-            Memory: "4Gi",
-        },
-        SecurityPolicy: &types.SecurityPolicy{
-            SandboxRuntime: "gvisor",
-            NetworkPolicy:  "restricted",
-        },
-    }
-
-    // 提交任务
-    result, err := client.SubmitTask(context.Background(), task)
+    // 为我们的 CRD 创建一个 clientset
+    clientset, err := versioned.NewForConfig(config)
     if err != nil {
         log.Fatal(err)
     }
 
-    // 监控执行
-    status, err := client.GetTaskStatus(context.Background(), result.TaskID)
+    // 定义一个新的 Task
+    task := &agenticaiov1.Task{
+        ObjectMeta: metav1.ObjectMeta{
+            Name:      "my-first-task",
+            Namespace: "default",
+        },
+        Spec: agenticaiov1.TaskSpec{
+            ImageRef: "ubuntu:latest",
+            Command:  []string{"echo", "Hello from AgenticAI!"},
+        },
+    }
+
+    // 在集群中创建 Task
+    createdTask, err := clientset.AgenticaiV1().Tasks("default").Create(context.TODO(), task, metav1.CreateOptions{})
     if err != nil {
         log.Fatal(err)
     }
 
-    log.Printf("任务状态: %s, 进度: %.2f%%", 
-               status.Phase, status.Progress*100)
+    fmt.Printf("已创建任务: %s\n", createdTask.Name)
 }
-```
-
-### 命令行演示
-
-```bash
-# 初始化新的智能体工作空间
-actl init my-agent-workspace
-
-# 部署具备网页浏览能力的智能体
-actl deploy agent \
-  --name research-agent \
-  --tools web-browser,document-analyzer \
-  --runtime gvisor \
-  --gpu 1
-
-# 监控智能体执行
-actl logs research-agent --follow
-
-# 查看性能指标
-actl metrics --agent research-agent --duration 1h
-
-# 运行基准测试
-actl benchmark run --suite webarena --agent research-agent
-
-# 检查成本分析
-actl cost analyze --timerange 24h
 ```
 
 ## 架构概览
