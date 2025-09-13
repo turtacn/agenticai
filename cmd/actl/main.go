@@ -5,13 +5,10 @@ import (
 	"context"
 	"flag"
 	"log"
-	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/spf13/cobra"
 	"github.com/turtacn/agenticai/cmd/actl/commands"
-	"github.com/turtacn/agenticai/internal/logger"
 )
 
 const binName = "actl"

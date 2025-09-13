@@ -2,14 +2,11 @@
 package commands
 
 import (
-	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/util/homedir"
-
-	"github.com/turtacn/agenticai/internal/config"
 )
 
 // NewRootCmd 构建 actl 根命令
@@ -46,7 +43,6 @@ func NewRootCmd(version, buildDate, commitSHA string) *cobra.Command {
 		newCompletionCmd(),
 	)
 
-	cobra.EnableTraverseChildren = true
 	return root
 }
 

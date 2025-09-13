@@ -19,11 +19,12 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/spiffe/go-spiffe/v2/spiffegrpc/spiffedialer"
+	"github.com/spiffe/go-spiffe/v2/spiffeid"
+	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/turtacn/agenticai/internal/constants"
-	e "github.com/turtacn/agenticai/internal/errors"
 	"github.com/turtacn/agenticai/internal/logger"
 	"github.com/turtacn/agenticai/pkg/apis"          // 触发 scheme 注册
 )
@@ -168,28 +169,24 @@ func restConfig(o *options) (*rest.Config, error) {
 // ======== SPIFFE Transport ========
 //
 func spiffeRoundTripper(restCfg *rest.Config, trustDomain string) (http.RoundTripper, error) {
-	ctx := context.Background()
-	wl, err := workloadapi.New(ctx, workloadapi.WithLogger(&loggerAdaptor{logger.WithCtx(ctx)}))
-	if err != nil {
-		return nil, fmt.Errorf("load workload API: %w", err)
-	}
-	dialer := spiffedialer.New(workloadapi.GRPCDial(wl))
-	rt := &http.Transport{
-		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			span := trace.SpanFromContext(ctx)
-			span.SetAttributes(attribute.String("client.dial", addr))
-			return dialer.DialContext(ctx, "tcp", addr)
-		},
-		TLSHandshakeTimeout: 10 * time.Second,
-	}
-	return rt, nil
-}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
 
-// small adaptor to fit spiffe logger interface
-type loggerAdaptor struct{ *zap.Logger }
-func (l *loggerAdaptor) Info(msg string, keysAndValues ...interface{})  { l.Sugar().Info(msg, keysAndValues...) }
-func (l *loggerAdaptor) Error(err error, msg string, keysAndValues ...interface{}) {
-	l.Sugar().Error(msg, append(keysAndValues, zap.Error(err))...)
+	// Create a workloadapi.X509Source to fetch SVIDs
+	source, err := workloadapi.NewX509Source(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create X509 source: %w", err)
+	}
+
+	// Create a tls.Config that uses the X509Source
+	// Authorize any SPIFFE ID from the trust domain
+	tlsConfig := tlsconfig.MTLSClientConfig(source, source, tlsconfig.AuthorizeAny())
+
+	// Use the default transport as a base
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = tlsConfig
+
+	return transport, nil
 }
 
 //

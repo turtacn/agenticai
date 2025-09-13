@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 
@@ -43,9 +42,9 @@ func New(cfg *config.GatewayConfig) *Gateway {
 func (g *Gateway) setupRoutes(r *gin.Engine) {
 	r.GET("/healthz", func(c *gin.Context) { c.String(http.StatusOK, "ok") })
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
-	api := r.Group("/api/v1", g.rateMiddleware())
-	api.POST("/agents/deploy", g.handleDeployAgent())
-	api.GET("/tasks/status/:id", g.handleTaskStatus())
+	// api := r.Group("/api/v1", g.rateMiddleware())
+	// api.POST("/agents/deploy", g.handleDeployAgent())
+	// api.GET("/tasks/status/:id", g.handleTaskStatus())
 }
 
 func (g *Gateway) rateMiddleware() gin.HandlerFunc {
@@ -58,6 +57,7 @@ func (g *Gateway) rateMiddleware() gin.HandlerFunc {
 	}
 }
 
+/*
 func (g *Gateway) handleTaskStatus() gin.HandlerFunc {
 	client := NewAgentClient() // 内部实现
 	return func(c *gin.Context) {
@@ -70,9 +70,10 @@ func (g *Gateway) handleTaskStatus() gin.HandlerFunc {
 		c.JSON(http.StatusOK, res)
 	}
 }
+*/
 
 func (g *Gateway) Start() error {
-	logger.Info(g.ctx, "gateway starting", "addr", g.Addr)
+	logger.Info(g.ctx, "gateway starting", zap.String("addr", g.Addr))
 	return g.ListenAndServe()
 }
 func (g *Gateway) Stop() error {

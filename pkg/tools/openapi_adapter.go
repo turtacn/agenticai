@@ -2,9 +2,7 @@
 package tools
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,35 +10,35 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/turtacn/agenticai/internal/logger"
-	types "github.com/turtacn/agenticai/pkg/types"
+	"github.com/turtacn/agenticai/pkg/apis"
 )
 
 // OpenAPIAdapter 适配器
 type OpenAPIAdapter interface {
 	LoadSpec(ctx context.Context, raw []byte) error
-	ListTools() []*types.Metadata
+	ListTools() []*apis.Metadata
 	Invoke(
 		ctx context.Context,
 		toolName string,
 		input map[string]interface{},
-	) (*types.ToolResult, error)
+	) (*apis.ToolResult, error)
 }
 
 type openAPIAdapter struct {
 	doc   *openapi3.T
-	cache map[string]*types.ToolSpec // name->spec
+	cache map[string]*apis.ToolSpec // name->spec
 	http  *http.Client
 	trace trace.Tracer
 }
 
 func NewOpenAPIAdapter() OpenAPIAdapter {
 	return &openAPIAdapter{
-		cache: make(map[string]*types.ToolSpec),
+		cache: make(map[string]*apis.ToolSpec),
 		http:  &http.Client{Timeout: 10 * time.Second, Transport: otelhttp.NewTransport(http.DefaultTransport)},
-		trace: trace.Tracer{},
+		trace: otel.Tracer("openapi"),
 	}
 }
 
@@ -50,30 +48,31 @@ func (a *openAPIAdapter) LoadSpec(_ context.Context, raw []byte) error {
 		return fmt.Errorf("invalid openapi: %w", err)
 	}
 	// 扁平化路径生成工具
-	for path, pItem := range doc.Paths {
+	for _, path := range doc.Paths.InMatchingOrder() {
+		pItem := doc.Paths.Find(path)
 		for method, op := range pItem.Operations() {
 			id := fmt.Sprintf("%s %s", method, path)
-			a.cache[id] = &types.ToolSpec{
-				ID:       id,
-				Name:     op.OperationID,
-				Version:  fmt.Sprintf("%d", 1),
-				Metadata: op.Description,
-				Category: "openapi",
-				ArgsSchema: convertOpenAPIArgs(op.Parameters),
+			a.cache[id] = &apis.ToolSpec{
+				ID:          id,
+				Name:        op.OperationID,
+				Version:     doc.Info.Version,
+				Description: op.Description,
+				Category:    "openapi",
+				ArgsSchema:  convertOpenAPIArgs(op.Parameters),
 			}
 		}
 	}
 	return nil
 }
 
-func (a *openAPIAdapter) ListTools() []*types.Metadata {
-	out := make([]*types.Metadata, 0, len(a.cache))
+func (a *openAPIAdapter) ListTools() []*apis.Metadata {
+	out := make([]*apis.Metadata, 0, len(a.cache))
 	for _, v := range a.cache {
-		out = append(out, &types.Metadata{
+		out = append(out, &apis.Metadata{
 			ID:      v.ID,
 			Name:    v.Name,
 			Version: v.Version,
-			Digest:  fmt.Sprintf("%x", hashSpec(v)),
+			Digest:  v.Digest,
 		})
 	}
 	return out
@@ -83,10 +82,10 @@ func (a *openAPIAdapter) Invoke(
 	ctx context.Context,
 	toolName string,
 	input map[string]interface{},
-) (*types.ToolResult, error) {
+) (*apis.ToolResult, error) {
 	ctx, span := a.trace.Start(ctx, "OpenAPIAdapter.Invoke")
 	defer span.End()
-	spec, ok := a.cache[toolName]
+	_, ok := a.cache[toolName]
 	if !ok {
 		return nil, fmt.Errorf("tool %s not found", toolName)
 	}
@@ -104,13 +103,13 @@ func (a *openAPIAdapter) Invoke(
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
-	return &types.ToolResult{
+	return &apis.ToolResult{
 		Output: string(body),
 		Status: int32(resp.StatusCode),
 	}, nil
 }
 
 /* -------------- helper --------------- */
-func convertOpenAPIArgs(params openapi3.Parameters) types.AnyMap { return nil }
-func hashSpec(s *types.ToolSpec) uint64                    { return 0 }
+func convertOpenAPIArgs(params openapi3.Parameters) apis.AnyMap { return nil }
+func hashSpec(s *apis.ToolSpec) uint64                    { return 0 }
 //Personal.AI order the ending

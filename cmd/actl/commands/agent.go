@@ -2,7 +2,6 @@
 package commands
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -11,10 +10,10 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/turtacn/agenticai/pkg/types"
 	"github.com/turtacn/agenticai/pkg/utils"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
 // NewAgentCmd 聚合所有与 agent 相关的子命令
@@ -38,7 +37,6 @@ func NewAgentCmd(kubeCfg, defaultNS string) *cobra.Command {
 /* -------------------- create -------------------- */
 func agentCreateCmd(kubeCfg string) *cobra.Command {
 	var cpu, mem string
-	var replicas int
 	cmd := &cobra.Command{
 		Use:   "create NAME [IMAGE]",
 		Short: "Deploy a new agent",
@@ -51,7 +49,7 @@ func agentCreateCmd(kubeCfg string) *cobra.Command {
 				image = args[1]
 			}
 
-			cs, err := utils.ClientFromKubeConfig(kubeCfg)
+			cs, err := ClientFromKubeConfig(kubeCfg)
 			if err != nil {
 				return fmt.Errorf("k8s client: %w", err)
 			}
@@ -105,7 +103,7 @@ func agentListCmd(kubeCfg string) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			ns, _ := cmd.Flags().GetString("namespace")
-			cs, err := utils.ClientFromKubeConfig(kubeCfg)
+			cs, err := ClientFromKubeConfig(kubeCfg)
 			if err != nil {
 				return err
 			}
@@ -140,7 +138,7 @@ func agentDeleteCmd(kubeCfg string) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			ns, _ := cmd.Flags().GetString("namespace")
-			cs, err := utils.ClientFromKubeConfig(kubeCfg)
+			cs, err := ClientFromKubeConfig(kubeCfg)
 			if err != nil {
 				return err
 			}
@@ -167,7 +165,7 @@ func agentLogsCmd(kubeCfg string) *cobra.Command {
 			ns, _ := cmd.Flags().GetString("namespace")
 			name := args[0]
 
-			cs, err := utils.ClientFromKubeConfig(kubeCfg)
+			cs, err := ClientFromKubeConfig(kubeCfg)
 			if err != nil {
 				return err
 			}
@@ -196,8 +194,4 @@ func agentLogsCmd(kubeCfg string) *cobra.Command {
 	return cmd
 }
 
-// utils.ClientFromKubeConfig 内部用
-func ClientFromKubeConfig(cfgPath string) (*kubernetes.Clientset, error) {
-	return utils.ClientFromKubeConfig(cfgPath)
-}
 //Personal.AI order the ending

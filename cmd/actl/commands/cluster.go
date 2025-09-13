@@ -2,13 +2,13 @@
 package commands
 
 import (
-	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/turtacn/agenticai/pkg/utils"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/turtacn/agenticai/pkg/utils"
 )
 
 func NewClusterCmd(kubeCfg string) *cobra.Command {
@@ -33,7 +33,7 @@ func clusterInitCmd(kubeCfg string) *cobra.Command {
 		Short: "Initialize cluster prerequisites",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Println("🔧 Verifying cluster prerequisites...")
-			cs, err := utils.ClientFromKubeConfig(kubeCfg)
+			cs, err := ClientFromKubeConfig(kubeCfg)
 			if err != nil {
 				return err
 			}
@@ -74,7 +74,7 @@ func clusterStatusCmd(kubeCfg string) *cobra.Command {
 		Short: "Current cluster overview",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
-			cs, err := utils.ClientFromKubeConfig(kubeCfg)
+			cs, err := ClientFromKubeConfig(kubeCfg)
 			if err != nil {
 				return err
 			}
@@ -87,7 +87,7 @@ func clusterStatusCmd(kubeCfg string) *cobra.Command {
 			gpu := int32(0)
 			for _, n := range nodes.Items {
 				if v, ok := n.Status.Capacity["nvidia.com/gpu"]; ok {
-					gpu += v.Value()
+					gpu += int32(v.Value())
 				}
 			}
 			fmt.Printf("Nodes    : %d [GPU=%d]\n", len(nodes.Items), gpu)
@@ -120,7 +120,7 @@ func clusterDiagnoseCmd(kubeCfg string) *cobra.Command {
 		Short: "Run health checks and print report",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
-			cs, err := utils.ClientFromKubeConfig(kubeCfg)
+			cs, err := ClientFromKubeConfig(kubeCfg)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "❌ failed to talk to cluster: %v\n", err)
 				return nil

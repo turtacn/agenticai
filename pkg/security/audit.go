@@ -38,12 +38,12 @@ func init() {
 }
 
 func AuditLog(ctx context.Context, ev *api.AuditEvent) {
-	ev.Timestamp = time.Now().UTC()
+	ev.EventTime = time.Now().UTC()
 	if err := encoder.Encode(ev); err != nil {
 		logger.Error(ctx, "audit write fail", zap.Error(err))
 	}
 	result := "success"
-	if ev.Error != "" {
+	if ev.Outcome == "denied" || ev.Outcome == "error" {
 		result = "fail"
 	}
 	auditCounter.WithLabelValues(result, ev.Resource).Inc()

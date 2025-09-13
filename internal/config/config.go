@@ -7,8 +7,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/turtacn/agenticai/internal/constants"
 	"github.com/turtacn/agenticai/internal/errors"
@@ -80,6 +82,10 @@ type Sandbox struct {
 type Storage struct {
 	Type   string                 `mapstructure:"type"`   // local/s3/gcp/abs/minio/etc
 	Config map[string]interface{} `mapstructure:"config"` // 具体 backend map
+}
+
+type GatewayConfig struct {
+	Listen string `mapstructure:"listen"`
 }
 
 // ---------- 单例 + 锁 ----------

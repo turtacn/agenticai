@@ -5,29 +5,27 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"go.opentelemetry.io/otel/trace"
-	"github.com/turtacn/agenticai/internal/logger"
-	api "github.com/turtacn/agenticai/pkg/types"
 )
 
 type Type string
 
 const (
-	TypeGvisor    = "gvisor"
-	TypeKata      = "kata"
+	TypeGvisor      = "gvisor"
+	TypeKata        = "kata"
 	TypeFirecracker = "firecracker"
 )
 
 type SandboxSpec struct {
-	ImageRef  string
-	Cmd       []string
-	Env       map[string]string
-	Resource  ResourceLimit
-	Network   bool
-	Volume    string
+	Type     Type
+	ImageRef string
+	Cmd      []string
+	Env      map[string]string
+	Resource ResourceLimit
+	Network  bool
+	Volume   string
 }
 
 type ResourceLimit struct {
@@ -39,7 +37,7 @@ type Sandbox interface {
 	Start(ctx context.Context) error
 	Kill(ctx context.Context) error
 	Wait(ctx context.Context) error
-	Info(ctx context.Context) (*Info, error
+	Info(ctx context.Context) (*Info, error)
 }
 
 type Info struct {
@@ -89,6 +87,6 @@ func (m *manager) Start(ctx context.Context, spec *SandboxSpec) (Sandbox, error)
 }
 
 func (m *manager) Stop(ctx context.Context, id string) error    { return nil }
-func (m *manager) List(ctx context.Context) ([]*Info, error)    { return nil }
+func (m *manager) List(ctx context.Context) ([]*Info, error)    { return nil, nil }
 func (m *manager) Close() error                                 { return nil }
 //Personal.AI order the ending

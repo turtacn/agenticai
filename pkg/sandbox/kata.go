@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 	"github.com/turtacn/agenticai/internal/logger"
 )
 
@@ -37,7 +38,7 @@ func (k *kata) Start(ctx context.Context) error {
 	if err := k.cmd.Start(); err != nil {
 		return err
 	}
-	logger.Info(ctx, "kata started", "ID", k.ID)
+	logger.Info(ctx, "kata started", zap.String("ID", k.ID))
 	return nil
 }
 

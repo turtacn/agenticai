@@ -4,7 +4,7 @@ package controller
 import (
 	"context"
 	"fmt"
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 	"reflect"
 	"time"
 

@@ -3,7 +3,6 @@ package observability
 
 import (
 	"context"
-	"log"
 	"os"
 
 	"go.opentelemetry.io/otel"

@@ -4,7 +4,7 @@ package controller
 import (
 	"context"
 	"fmt"
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 	"reflect"
 	"time"
 
@@ -19,8 +19,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"k8s.io/utils/pointer"
 
-	apiv1 "github.com/turtacn/agenticai/pkg/apis"
+	agenticaiov1 "github.com/turtacn/agenticai/pkg/apis/agenticai.io/v1"
 	"github.com/turtacn/agenticai/internal/constants"
 	e "github.com/turtacn/agenticai/internal/errors"
 	"github.com/turtacn/agenticai/internal/logger"
@@ -43,7 +44,7 @@ func (r *TaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	logCtx := logger.WithCtx(ctx).With(zap.String("task", req.NamespacedName.String()))
 	log := logCtx.Sugar()
 
-	var task apiv1.Task
+	var task agenticaiov1.Task
 	if err := r.Client.Get(ctx, req.NamespacedName, &task); err != nil {
 		if apierrs.IsNotFound(err) {
 			return ctrl.Result{}, nil
@@ -55,7 +56,7 @@ func (r *TaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	// 预检查 spec
 	if err := task.Spec.Validate(); err != nil {
 		log.Errorf("invalid spec: %v", err)
-		r.updateStatus(ctx, &task, apiv1.TaskFailed, fmt.Sprintf("invalid spec: %v", err), 0)
+		r.updateStatus(ctx, &task, agenticaiov1.TaskFailed, fmt.Sprintf("invalid spec: %v", err), 0)
 		return ctrl.Result{}, nil
 	}
 
@@ -89,7 +90,7 @@ func (r *TaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	task.Status.Message = podResult.Message
 	task.Status.Progress = podResult.Progress
 	task.Status.TaskResult = podResult.Result
-	if !reflect.DeepEqual(oldStatus, task.Status) {
+	if !reflect.DeepEqual(oldStatus, &task.Status) {
 		if err := r.Status().Update(ctx, &task); err != nil {
 			// 冲突时重入
 			return ctrl.Result{Requeue: true, RequeueAfter: 2 * time.Second}, nil
@@ -100,47 +101,36 @@ func (r *TaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 }
 
 // ensureJob：根据 Task.Spec 创建 Batch Job
-func (r *TaskReconciler) ensureJob(ctx context.Context, task *apiv1.Task) (*batchv1.Job, error) {
+func (r *TaskReconciler) ensureJob(ctx context.Context, task *agenticaiov1.Task) (*batchv1.Job, error) {
 	jobName := fmt.Sprintf("%s-job", task.Name)
 	ns := task.Namespace
 	if ns == "" {
 		ns = metav1.NamespaceDefault
 	}
 
-	// selector 找到可用 Agent（调度逻辑留给调度器，这里仅标记）
-	nodeSelector := task.Spec.NodeSelector // 后期可扩展拓扑
-
 	jobSpec := batchv1.JobSpec{
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
-				Labels: map[string]string{
-					"app.kubernetes.io/name":     constants.ProjectName,
-					"app.kubernetes.io/component":"task",
-					"task":                        task.Name,
-				},
+				Labels: task.Spec.Labels,
 			},
 			Spec: corev1.PodSpec{
-				RestartPolicy:      corev1.RestartPolicyNever,
-				NodeSelector:        nodeSelector,
-				Tolerations:         task.Spec.Tolerations,
-				InitContainers:      nil,
+				RestartPolicy: corev1.RestartPolicyNever,
 				Containers: []corev1.Container{
 					{
-						Name:    "task-runner",
-						Image:   task.Spec.ImageRef,
-						Command: task.Spec.Command,
-						Args:    task.Spec.Args,
+						Name:      "task-runner",
+						Image:     task.Spec.ImageRef,
+						Command:   task.Spec.Command,
+						Args:      task.Spec.Args,
 						Resources: task.Spec.Resources,
-						Env:     task.Spec.Env,
+						Env:       task.Spec.Env,
 					},
 				},
-				Volumes: nil,
 			},
 		},
-		Parallelism:             pointer.Int32(1),
-		Completions:             pointer.Int32(1),
-		ActiveDeadlineSeconds:   pointer.Int64(int64(task.Spec.Timeout.Duration.Seconds())),
-		BackoffLimit:            pointer.Int32(task.Spec.RetryPolicy.Limit),
+		Parallelism:           pointer.Int32(1),
+		Completions:           pointer.Int32(1),
+		ActiveDeadlineSeconds: pointer.Int64(int64(task.Spec.Timeout.Duration.Seconds())),
+		BackoffLimit:          pointer.Int32(task.Spec.RetryPolicy.Limit),
 	}
 
 	job := &batchv1.Job{
@@ -170,9 +160,9 @@ func (r *TaskReconciler) ensureJob(ctx context.Context, task *apiv1.Task) (*batc
 }
 
 // checkDependencies：遍历 Task.Dependencies 检查前置是否完成
-func (r *TaskReconciler) checkDependencies(ctx context.Context, task *apiv1.Task) (bool, error) {
+func (r *TaskReconciler) checkDependencies(ctx context.Context, task *agenticaiov1.Task) (bool, error) {
 	for _, dep := range task.Spec.Dependencies {
-		var depTask apiv1.Task
+		var depTask agenticaiov1.Task
 		if err := r.Get(ctx, types.NamespacedName{Name: dep.TaskID, Namespace: task.Namespace}, &depTask); err != nil {
 			return false, err
 		}
@@ -184,10 +174,10 @@ func (r *TaskReconciler) checkDependencies(ctx context.Context, task *apiv1.Task
 }
 
 type podStatusResult struct {
-	Phase    apiv1.TaskPhase
+	Phase    agenticaiov1.TaskPhase
 	Message  string
 	Progress int32
-	Result   *apiv1.TaskResult // 非 nil 代表终止
+	Result   *agenticaiov1.TaskResult // 非 nil 代表终止
 }
 
 // loadRunningPodStatus：读 Job Pod 实时状态
@@ -198,14 +188,14 @@ func (r *TaskReconciler) loadRunningPodStatus(ctx context.Context, job *batchv1.
 		return nil, err
 	}
 	if len(podList.Items) == 0 {
-		return &podStatusResult{Phase: apiv1.TaskPending, Message: "waiting for pod schedule"}, nil
+		return &podStatusResult{Phase: agenticaiov1.TaskPending, Message: "waiting for pod schedule"}, nil
 	}
 	pod := &podList.Items[0]
 	switch pod.Status.Phase {
 	case corev1.PodPending:
-		return &podStatusResult{Phase: apiv1.TaskPending, Message: pod.Status.Message}, nil
+		return &podStatusResult{Phase: agenticaiov1.TaskPending, Message: pod.Status.Message}, nil
 	case corev1.PodRunning:
-		return &podStatusResult{Phase: apiv1.TaskRunning, Progress: percentFromAnnotations(pod.Annotations)}, nil
+		return &podStatusResult{Phase: agenticaiov1.TaskRunning, Progress: percentFromAnnotations(pod.Annotations)}, nil
 	case corev1.PodSucceeded:
 		exitCode := int32(0)
 		if len(pod.Status.ContainerStatuses) > 0 {
@@ -214,9 +204,9 @@ func (r *TaskReconciler) loadRunningPodStatus(ctx context.Context, job *batchv1.
 			}
 		}
 		return &podStatusResult{
-			Phase:   apiv1.TaskCompleted,
+			Phase:   agenticaiov1.TaskCompleted,
 			Message: "finished",
-			Result:  &apiv1.TaskResult{ExitCode: exitCode, Output: pod.Annotations["output"], Artifact: pod.Annotations["artifact"]},
+			Result:  &agenticaiov1.TaskResult{ExitCode: exitCode, Output: pod.Annotations["output"], Artifact: pod.Annotations["artifact"]},
 		}, nil
 	case corev1.PodFailed:
 		msg := "pod failed"
@@ -226,12 +216,12 @@ func (r *TaskReconciler) loadRunningPodStatus(ctx context.Context, job *batchv1.
 			}
 		}
 		return &podStatusResult{
-			Phase: apiv1.TaskFailed,
+			Phase:   agenticaiov1.TaskFailed,
 			Message: msg,
-			Result:  &apiv1.TaskResult{ExitCode: 1},
+			Result:  &agenticaiov1.TaskResult{ExitCode: 1},
 		}, nil
 	}
-	return &podStatusResult{Phase: apiv1.TaskPending, Message: "unknown"}, nil
+	return &podStatusResult{Phase: agenticaiov1.TaskPending, Message: "unknown"}, nil
 }
 
 // percentFromAnnotations 示例提取 Pod 进度
@@ -245,7 +235,7 @@ func percentFromAnnotations(ann map[string]string) int32 {
 }
 
 // updateStatus 快捷工具
-func (r *TaskReconciler) updateStatus(ctx context.Context, task *apiv1.Task, phase apiv1.TaskPhase, msg string, progress int32) {
+func (r *TaskReconciler) updateStatus(ctx context.Context, task *agenticaiov1.Task, phase agenticaiov1.TaskPhase, msg string, progress int32) {
 	task.Status.Phase = phase
 	task.Status.Message = msg
 	task.Status.Progress = progress
@@ -255,7 +245,7 @@ func (r *TaskReconciler) updateStatus(ctx context.Context, task *apiv1.Task, pha
 // SetupWithManager attach watch
 func (r *TaskReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&apiv1.Task{}).
+		For(&agenticaiov1.Task{}).
 		Owns(&batchv1.Job{}).
 		Complete(r)
 }

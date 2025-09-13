@@ -12,11 +12,13 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"crypto/x509/pkix"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
+	"math/big"
 	"time"
 )
 
@@ -83,7 +85,10 @@ func GenerateRSAKeyPair() (*RSAKeyPair, error) {
 		return nil, err
 	}
 	privBytes := x509.MarshalPKCS1PrivateKey(priv)
-	pubBytes := x509.MarshalPKIXPublicKey(&priv.PublicKey)
+	pubBytes, err := x509.MarshalPKIXPublicKey(&priv.PublicKey)
+	if err != nil {
+		return nil, err
+	}
 	return &RSAKeyPair{
 		PrivatePEM: string(pemEncode(privBytes, "RSA PRIVATE KEY")),
 		PublicPEM:  string(pemEncode(pubBytes, "PUBLIC KEY")),
@@ -238,14 +243,23 @@ func GenSelfSigned(host string, validDays int) (certPEM, keyPEM string, err erro
 	notBefore := time.Now()
 	notAfter := notBefore.Add(time.Duration(validDays) * 24 * time.Hour)
 
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to generate serial number: %w", err)
+	}
+
 	tmpl := &x509.Certificate{
-		SerialNumber:          []byte{1},
+		SerialNumber:          serialNumber,
+		Subject: pkix.Name{
+			CommonName:   fmt.Sprintf("agentic-ai-%s", host),
+			Organization: []string{"AgenticAI"},
+		},
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
 		SignatureAlgorithm:    x509.ECDSAWithSHA256,
 		DNSNames:              []string{host},
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
-		Subject:               x509.PKIX509CertificateSubjectName{CommonName: fmt.Sprintf("agentic-ai-%s", host)}.Subject,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 	}

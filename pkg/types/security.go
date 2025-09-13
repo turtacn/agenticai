@@ -23,49 +23,6 @@ type AuthResult struct {
 	AllowedRoles []string `json:"allowed_roles"`
 }
 
-// SecurityPolicy 可序列化策略对象，与 Gatekeeper/Rego 兼容
-type SecurityPolicy struct {
-	ApiVersion string       `json:"apiVersion"`
-	Kind       string       `json:"kind"`
-	Metadata   PolicyMeta   `json:"metadata"`
-	Spec       PolicySpec   `json:"spec"`
-}
-
-type PolicyMeta struct {
-	Name        string            `json:"name"`
-	Namespace   string            `json:"namespace,omitempty"`
-	Labels      map[string]string `json:"labels,omitempty"`
-	Annotations map[string]string `json:"annotations,omitempty"`
-}
-
-// PolicySpec 兼容 Kubernetes 约束框架
-type PolicySpec struct {
-	Match       PolicyMatch       `json:"match"`
-	Constraints PolicyConstraints `json:"constraints"`
-}
-
-type PolicyMatch struct {
-	Kind        string            `json:"kind"`        // "Agent" | "Task" ...
-	Labels      map[string]string `json:"labels,omitempty"`
-	Namespaces  []string          `json:"namespaces,omitempty"`
-	Expressions []string          `json:"expressions,omitempty"`
-}
-type PolicyConstraints struct {
-	// 例：禁止高危系统调用
-	SysCallRestriction []string `json:"sysCallRestriction,omitempty"`
-	// 例：只读根文件系统
-	ReadOnlyRootFS bool `json:"readOnlyRootFS"`
-	// 例：禁用 privileged
-	AllowPrivileged bool `json:"allowPrivileged"`
-}
-
-// RBACRule 用于内存策略树
-type RBACRule struct {
-	Role   string   `json:"role"`
-	Verbs  []string `json:"verbs"`  // "create","delete"...
-	Resources []string `json:"resources"` // "Agent","Task",...
-}
-
 // AuditEvent 所有控制层入口统一事件格式
 type AuditEvent struct {
 	EventTime time.Time `json:"event_time"`

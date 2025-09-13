@@ -26,7 +26,11 @@ func InitLog(level string) (func(), error) {
 
 func FromCtx(ctx context.Context) *zap.SugaredLogger {
 	if baseLog == nil {
-		baseLog, _ = zap.NewProduction().Sugar()
+		l, err := zap.NewProduction()
+		if err != nil {
+			panic(err)
+		}
+		baseLog = l.Sugar()
 	}
 	return baseLog.With(zap.String("traceID", getTrace(ctx)))
 }

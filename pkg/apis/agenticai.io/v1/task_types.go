@@ -1,13 +1,25 @@
-// pkg/types/task.go
-package types
+package v1
 
 import (
+	"fmt"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// TaskSpec 定义任务提交时的期望
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Task is the Schema for the tasks API
+type Task struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   TaskSpec   `json:"spec,omitempty"`
+	Status TaskStatus `json:"status,omitempty"`
+}
+
+// TaskSpec defines the desired state of Task
 type TaskSpec struct {
 	// 任务内容
 	Description string   `json:"description,omitempty"`
@@ -24,10 +36,10 @@ type TaskSpec struct {
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 
 	// 策略
-	Priority      int32          `json:"priority"`      // 数值越大优先级越高
-	Timeout       metav1.Duration `json:"timeout,omitempty"`
-	RetryPolicy   RetryPolicy     `json:"retryPolicy,omitempty"`
-	MaxConcurrency int32          `json:"maxConcurrency,omitempty"`
+	Priority       int32           `json:"priority"` // 数值越大优先级越高
+	Timeout        metav1.Duration `json:"timeout,omitempty"`
+	RetryPolicy    RetryPolicy     `json:"retryPolicy,omitempty"`
+	MaxConcurrency int32           `json:"maxConcurrency,omitempty"`
 
 	// 依赖
 	Dependencies []Dependency `json:"dependencies,omitempty"`
@@ -39,41 +51,39 @@ type TaskSpec struct {
 	Labels map[string]string `json:"labels,omitempty"`
 }
 
-// Task 顶层对象（等价于 CR）
-type Task struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   TaskSpec   `json:"spec"`
-	Status TaskStatus `json:"status"`
+// Validate checks the TaskSpec for correctness.
+func (s *TaskSpec) Validate() error {
+	if s.ImageRef == "" {
+		return fmt.Errorf("imageRef is required")
+	}
+	return nil
 }
 
-// TaskStatus 实时状态
+// TaskStatus defines the observed state of Task
 type TaskStatus struct {
 	Phase      TaskPhase        `json:"phase"`
 	Message    string           `json:"message,omitempty"`
 	StartTime  *metav1.Time     `json:"startTime,omitempty"`
 	EndTime    *metav1.Time     `json:"endTime,omitempty"`
-
-	// 进度 [0-100]
-	Progress int32 `json:"progress"`
-
-	// 节点
-	NodeName string `json:"nodeName,omitempty"`
-
-	// 资源
+	Progress   int32            `json:"progress"`
+	NodeName   string           `json:"nodeName,omitempty"`
 	CPUUsed    resource.Quantity `json:"cpuUsed,omitempty"`
 	MemoryUsed resource.Quantity `json:"memoryUsed,omitempty"`
 	GPUUsed    int64            `json:"gpuUsed,omitempty"`
-
-	// 结果
-	TaskResult *TaskResult `json:"taskResult,omitempty"`
-
-	// 条件
-	Conditions []TaskCondition `json:"conditions,omitempty"`
+	TaskResult *TaskResult      `json:"taskResult,omitempty"`
+	Conditions []TaskCondition  `json:"conditions,omitempty"`
 }
 
-// TaskPhase 完整生命周期
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// TaskList contains a list of Task
+type TaskList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []Task `json:"items"`
+}
+
+// TaskPhase defines the lifecycle phase of a Task.
 type TaskPhase string
 
 const (
@@ -85,7 +95,7 @@ const (
 	TaskCancelled   TaskPhase = "Cancelled"
 )
 
-// TaskCondition 与 K8s 对齐
+// TaskCondition aligns with K8s conditions.
 type TaskCondition struct {
 	Type               string             `json:"type"`
 	Status             metav1.ConditionStatus `json:"status"`
@@ -94,22 +104,21 @@ type TaskCondition struct {
 	Message            string             `json:"message"`
 }
 
-// TaskResult 存放任务输出
+// TaskResult holds the output of a task.
 type TaskResult struct {
 	ExitCode int32  `json:"exitCode"`
 	Output   string `json:"output,omitempty"`
-	Artifact string `json:"artifact,omitempty"` // 对象存储 URI
+	Artifact string `json:"artifact,omitempty"`
 }
 
-// RetryPolicy 重试策略
+// RetryPolicy defines the retry strategy.
 type RetryPolicy struct {
-	Limit    int32 `json:"limit"`
-	Backoff  metav1.Duration `json:"backoff,omitempty"`
+	Limit   int32           `json:"limit"`
+	Backoff metav1.Duration `json:"backoff,omitempty"`
 }
 
-// Dependency 任务依赖
+// Dependency defines a dependency on another task.
 type Dependency struct {
-	TaskID string `json:"taskId"`
-	State  TaskPhase `json:"state"` // 依赖的任务必须达到的 Phase
+	TaskID string    `json:"taskId"`
+	State  TaskPhase `json:"state"`
 }
-//Personal.AI order the ending

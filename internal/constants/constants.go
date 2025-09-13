@@ -2,7 +2,7 @@
 package constants
 
 import (
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 	"time"
 )
 

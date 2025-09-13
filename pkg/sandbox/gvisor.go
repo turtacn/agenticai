@@ -11,6 +11,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 	"github.com/turtacn/agenticai/internal/logger"
 )
 
@@ -43,7 +44,7 @@ func (g *gvisor) Start(ctx context.Context) error {
 	if err := g.cmd.Run(); err != nil {
 		return err
 	}
-	logger.Info(ctx, "gvisor started", "ID", g.ID)
+	logger.Info(ctx, "gvisor started", zap.String("ID", g.ID))
 	return nil
 }
 

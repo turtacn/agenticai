@@ -3,7 +3,6 @@ package agent
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"os"
 	"os/signal"
@@ -11,19 +10,14 @@ import (
 	"syscall"
 	"time"
 
-	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	re "github.com/turtacn/agenticai/internal/errors"
 	"github.com/turtacn/agenticai/internal/logger"
-	"github.com/turtacn/agenticai/internal/constants"
-	"github.com/turtacn/agenticai/pkg/storage"
 	"github.com/turtacn/agenticai/pkg/tools"
 	"github.com/turtacn/agenticai/pkg/security"
 	"github.com/turtacn/agenticai/pkg/sandbox"
-	"github.com/turtacn/agenticai/pkg/observability"
 )
 
 // Runtime 智能体运行时实例
@@ -34,8 +28,8 @@ type Runtime struct {
 	GRPCSrv      *grpc.Server
 	ToolRegistry tools.Registry
 	SandboxMgr   sandbox.Manager
-	StorageIface storage.Storage
-	MetricCollector *observability.MetricsCollector
+	// StorageIface storage.Storage
+	// MetricCollector *observability.MetricsCollector
 	ctx          context.Context
 	cancel       context.CancelFunc
 	wg           sync.WaitGroup
@@ -73,11 +67,11 @@ func New(spec *AgentSpec) (*Runtime, error) {
 	}
 	// 初始化组件
 	rt.ToolRegistry = tools.NewInMemRegistry()
-	rt.StorageIface = storage.NewLocalStorage("/tmp/agents", ctx)
+	// rt.StorageIface = storage.NewLocalStorage("/tmp/agents", ctx)
 	rt.SandboxMgr, _ = sandbox.NewManager(ctx, spec.Image, sandbox.TypeGvisor)
-	rt.MetricCollector = observability.NewLocalMetricsCollector()
+	// rt.MetricCollector = observability.NewLocalMetricsCollector()
 	// 注册自服务
-	pb.RegisterAgentServer(srv, rt)
+	// pb.RegisterAgentServer(srv, rt)
 	reflection.Register(srv)
 	return rt, nil
 }
@@ -127,6 +121,7 @@ func (r *Runtime) awaitShutdown() {
 	r.Stop()
 }
 
+/*
 type pbAgentServer struct{ *Runtime }
 func (r *pbAgentServer) ExecuteTask(ctx context.Context, req *pb.ExecuteTaskRequest) (*pb.ExecuteTaskResponse, error) {
 	_, span := otel.Tracer("runtime").Start(ctx, "ExecuteTask")
@@ -137,4 +132,5 @@ func (r *pbAgentServer) ExecuteTask(ctx context.Context, req *pb.ExecuteTaskRequ
 	}
 	return &pb.ExecuteTaskResponse{Result: tr}, nil
 }
+*/
 //Personal.AI order the ending

@@ -3,24 +3,20 @@ package security
 
 import (
 	"context"
-	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
-	"path/filepath"
 
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/net/context/ctxhttp"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/types/known/emptypb"
 
-	api "github.com/turtacn/agenticai/pkg/types"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
+	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"github.com/turtacn/agenticai/internal/logger"
+	"go.uber.org/zap"
 )
 
 type Identity interface {
@@ -50,14 +46,15 @@ func GetIdentity(ctx context.Context) (Identity, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger.Info(ctx, "loaded SPIFFE identity", "svid", svid.ID)
+	logger.Info(ctx, "loaded SPIFFE identity", zap.Stringer("svid", svid.ID))
 	return &identityImpl{source: src, spiffeID: svid.ID}, nil
 }
 
 func (i *identityImpl) ID() spiffeid.ID { return i.spiffeID }
 
 func (i *identityImpl) Source() credentials.TransportCredentials {
-	return credentials.NewTLS(i.source)
+	tlsConfig := tlsconfig.MTLSServerConfig(i.source, i.source, tlsconfig.AuthorizeAny())
+	return credentials.NewTLS(tlsConfig)
 }
 
 // --------------------------------------------------------------------
@@ -65,25 +62,50 @@ func (i *identityImpl) Source() credentials.TransportCredentials {
 // SPIFFEInterceptor gRPC 一元拦截器，附加 caller id
 func SPIFFEInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		peer, ok := peer.FromContext(ctx)
-		if !ok {
-			return nil, status.Error(codes.Unauthenticated, "no peer info")
-		}
-		tlsInfo, ok := peer.AuthInfo.(credentials.TLSInfo)
-		if !ok || len(tlsInfo.State.PeerCertificates) == 0 {
-			return nil, status.Error(codes.Unauthenticated, "invalid tls auth")
-		}
-		cert := tlsInfo.State.PeerCertificates[0]
-		id, err := x509svid.IDFromCert(cert)
+		id, err := authorize(ctx)
 		if err != nil {
-			return nil, status.Error(codes.Unauthenticated, err.Error())
+			return nil, err
 		}
-		newCtx := context.WithValue(ctx, ctxKeyCaller{}, id.String())
+		newCtx := context.WithValue(ctx, ctxKeyCaller, id.String())
 		return handler(newCtx, req)
 	}
 }
 
 func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
-	return grpc.NewServerStream
+	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		id, err := authorize(ss.Context())
+		if err != nil {
+			return err
+		}
+		newCtx := context.WithValue(ss.Context(), ctxKeyCaller, id.String())
+		return handler(srv, &wrappedServerStream{ss, newCtx})
+	}
+}
+
+// authorize is a helper to extract and validate a peer's SVID.
+func authorize(ctx context.Context) (spiffeid.ID, error) {
+	peer, ok := peer.FromContext(ctx)
+	if !ok {
+		return spiffeid.ID{}, status.Error(codes.Unauthenticated, "no peer info")
+	}
+	tlsInfo, ok := peer.AuthInfo.(credentials.TLSInfo)
+	if !ok || len(tlsInfo.State.PeerCertificates) == 0 {
+		return spiffeid.ID{}, status.Error(codes.Unauthenticated, "invalid tls auth")
+	}
+	id, err := x509svid.IDFromCert(tlsInfo.State.PeerCertificates[0])
+	if err != nil {
+		return spiffeid.ID{}, status.Error(codes.Unauthenticated, err.Error())
+	}
+	return id, nil
+}
+
+// wrappedServerStream is a thin wrapper around grpc.ServerStream that allows modifying the context.
+type wrappedServerStream struct {
+	grpc.ServerStream
+	ctx context.Context
+}
+
+func (w *wrappedServerStream) Context() context.Context {
+	return w.ctx
 }
 //Personal.AI order the ending

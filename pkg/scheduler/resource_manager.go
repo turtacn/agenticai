@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 	"sync"
 	"time"
 

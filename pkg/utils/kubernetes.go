@@ -15,8 +15,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-// Client 返回全局 K8s 客户端实例；优先尝试 In-Cluster → KUBECONFIG
-func Client() (*kubernetes.Clientset, error) {
+// KubeClient 返回全局 K8s 客户端实例；优先尝试 In-Cluster → KUBECONFIG
+func KubeClient() (*kubernetes.Clientset, error) {
 	var cfg *rest.Config
 	var err error
 	cfg, err = rest.InClusterConfig()
@@ -34,7 +34,7 @@ func Client() (*kubernetes.Clientset, error) {
 // CreateOrUpdate deploys a Pod，若已存在则执行滚动替换
 func CreateOrUpdate(ctx context.Context, cs *kubernetes.Clientset, ns string, pod *corev1.Pod) error {
 	pods := cs.CoreV1().Pods(ns)
-	exist, err := pods.Get(ctx, pod.Name, metav1.GetOptions{})
+	_, err := pods.Get(ctx, pod.Name, metav1.GetOptions{})
 	switch {
 	case err == nil: // 已存在 -> 删除后建
 		err = pods.Delete(ctx, pod.Name, metav1.DeleteOptions{GracePeriodSeconds: pointerInt64(0)})
